@@ -113,7 +113,7 @@ target_compile_options(CFNetwork PRIVATE ${CFNETWORK_CFLAGS})
 
 # Use -DCMAKE_SHARED_LINKER_FLAGS to specify this
 separate_arguments(CFNETWORK_LDLAGS UNIX_COMMAND "${CFNETWORK_LDLAGS}")
-target_link_directories(CFNetwork PRIVATE ${CFNETWORK_LDLAGS})
+target_link_options(CFNetwork PRIVATE ${CFNETWORK_LDLAGS})
 
 target_include_directories(${PROJECT_NAME}
   PRIVATE
