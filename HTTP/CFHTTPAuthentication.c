@@ -38,9 +38,9 @@
 #include "CFNetworkInternal.h"
 #include "CFHTTPInternal.h"
 #include <CFNetwork/CFHTTPStream.h>
-#include <security_cdsa_utils/cuEnc64.h>
 
 #if defined(__MACH__)
+#include <security_cdsa_utils/cuEnc64.h>
 #include <pthread.h>
 #include <CommonCrypto/CommonDigest.h>
 #include <mach-o/dyld.h>
@@ -311,8 +311,10 @@ struct _CFHTTPAuthentication {
 	the user will continue to apply the authentication to the requests.
 */
 typedef struct {
-	NtlmGeneratorRef	_ntlm;				// NTLM object used for creating hashes for auth
-	CFStringRef			_authdata;			// Auth-Data received from the server
+#if defined(__MACH__)
+    NtlmGeneratorRef	_ntlm;				// NTLM object used for creating hashes for auth
+#endif
+    CFStringRef			_authdata;			// Auth-Data received from the server
 	CFStringRef			_negotiation;		// Final negotiation hash to be sent to the server
 } _AuthConnectionSpecific;
 
@@ -520,9 +522,11 @@ _AuthConnectionSpecificRelease(CFAllocatorRef allocator, _AuthConnectionSpecific
 	if (specific->_authdata)
 		CFRelease(specific->_authdata);
 	
+#if defined(__MACH__)
 	if (specific->_ntlm)
 		NtlmGeneratorRelease(specific->_ntlm);
-	
+#endif
+        
 	CFAllocatorDeallocate(allocator, specific);
 }
 
@@ -898,12 +902,14 @@ void _CFHTTPAuthenticationUpdateFromResponse(CFHTTPAuthenticationRef auth, CFHTT
 			else if (scheme == kCFHTTPAuthenticationSchemeNTLM) {
 				
 				_AuthConnectionSpecific* spec = (_AuthConnectionSpecific*)CFDictionaryGetValue(auth->_connections, conn);
-				
+
+#if defined(__MACH__)                                
 				if (spec && !spec->_ntlm && !spec->_authdata && spec->_negotiation) {
 					//  going to state 0 1 0
 					spec->_authdata = spec->_negotiation;
 					spec->_negotiation = NULL;
 				}
+#endif				
 			}
 		}
 		else {
@@ -999,6 +1005,7 @@ void _CFHTTPAuthenticationUpdateFromResponse(CFHTTPAuthenticationRef auth, CFHTT
 						if (spec->_authdata)
 							CFRelease(spec->_authdata);
 						
+#if defined(__MACH__)
 						if (spec->_ntlm) {
 							OSStatus result;
 							CFDataRef blob = NULL;
@@ -1018,6 +1025,7 @@ void _CFHTTPAuthenticationUpdateFromResponse(CFHTTPAuthenticationRef auth, CFHTT
 								CFRelease(blob);
 							}
 						}
+#endif
 						CFRelease(server);
 						
 						// going state 1 1 1
@@ -1026,6 +1034,7 @@ void _CFHTTPAuthenticationUpdateFromResponse(CFHTTPAuthenticationRef auth, CFHTT
 					
 					/* Failed to do the negotiated authentication. */
 					else if ((isProxy && (code == 407)) || (!isProxy && (code == 401))) {
+#if defined(__MACH__)
 						if (!spec->_ntlm && spec->_negotiation) {
 							_CFHTTPAuthenticationSetError(auth, kCFStreamErrorDomainHTTP, kCFStreamErrorHTTPAuthenticationBadUserName);
 						}
@@ -1043,6 +1052,7 @@ void _CFHTTPAuthenticationUpdateFromResponse(CFHTTPAuthenticationRef auth, CFHTT
 								CFRelease(blob);
 							}
 						}
+#endif						
 					}
 				}
 			}
@@ -1089,8 +1099,13 @@ CFStringRef _CFEncodeBase64(CFAllocatorRef allocator, CFDataRef inputData) {
 	
 	unsigned outDataLen;	
 	CFStringRef result = NULL;
+#if defined(__MACH__)
 	unsigned char *outData = cuEnc64(CFDataGetBytePtr(inputData), CFDataGetLength(inputData), &outDataLen);
-	
+#else
+	unsigned char *outData = NULL;
+#warning "_CFEncodeBase64() is not implemented on this platform"
+#endif
+
 	if(outData) {
 		
 		/* current cuEnc64 appends \n and NULL, trim them */
@@ -1120,8 +1135,13 @@ CFDataRef _CFDecodeBase64(CFAllocatorRef allocator, CFStringRef str) {
 
 	if (buffer) {
 		unsigned decoded;
+#if defined(__MACH__)
 		unsigned char* decode = cuDec64(buffer, length, &decoded);
-		
+#else
+		unsigned char* decode = NULL;
+#warning "_CFDecodeBase64() is not implemented on this platform"
+#endif
+                
 		if (buffer != stack_buffer)
 			CFAllocatorDeallocate(allocator, buffer);
 		
@@ -1346,8 +1366,12 @@ CFStringRef _CFStringCreateMD5HashWithString(CFAllocatorRef alloc, CFStringRef s
 	
 	// Get the bytes of the conversion
 	UInt8* buffer = _CFStringGetOrCreateCString(alloc, string, NULL, &buffer_size, kCFStringEncodingISOLatin1);
+#if defined (__MACH__)
 	Boolean did = _CFMD5(buffer, buffer_size, hash, sizeof(hash));
-        
+#else
+    Boolean did = FALSE;
+#endif
+
 	CFAllocatorDeallocate(alloc, buffer);
 
     if (did) {
@@ -1658,7 +1682,11 @@ _CFHTTPAuthenticationCreateNegotiateHeaderForRequest(CFHTTPAuthenticationRef aut
 
 	if (!specific) {
 		
+#if defined(__MACH__)
 		_AuthConnectionSpecific s = {NULL, NULL, NULL};
+#else
+        _AuthConnectionSpecific s = {NULL, NULL};
+#endif
 		CFDictionaryAddValue(auth->_connections, connection, &s);
 		
 		/* Re-fetch because the add will make a new copy in the dictionary. */
@@ -1710,6 +1738,7 @@ _CFHTTPAuthenticationCreateNegotiateHeaderForRequest(CFHTTPAuthenticationRef aut
 			len = sizeof(buf2);
 			servicetype = _CFStringGetOrCreateCString(alloc, scheme, buf2, &len, kCFStringEncodingASCII);
 			
+#if defined(__MACH__)
 			// if this is http or https, we're going to try 2 forms of ticket retrieval
 			if (!strncmp("http", (const char*)servicetype, 4)) {
 
@@ -1721,7 +1750,8 @@ _CFHTTPAuthenticationCreateNegotiateHeaderForRequest(CFHTTPAuthenticationRef aut
 			} else {
 				spnegoError = spnegoTokenInitFromPrincipal((const char*)hostname, (const char *)servicetype, &blob, (unsigned*)&len);
 			}
-			
+#endif
+
 			if (hostname != buf1)
 				CFAllocatorDeallocate(alloc, hostname);
 			
@@ -1779,12 +1809,14 @@ _CFHTTPMessageSetNTLMAuthenticationOnRequest(CFHTTPMessageRef request, CFHTTPAut
 			auth->_user = (CFStringRef)CFRetain(username);
 			auth->_domain = domain ? (CFStringRef)CFRetain(domain) : NULL;
 			
+#if defined(__MACH__)
 			if (noErr != (result = NtlmGeneratePasswordHashes(alloc, password, &(auth->_hash[0]), &(auth->_hash[1])))) {
 				
 				_CFHTTPAuthenticationSetError(auth, kCFStreamErrorDomainMacOSStatus, result);
 				
 				return FALSE;
 			}
+#endif
 		}
 		
 		else {			
@@ -1813,6 +1845,7 @@ _CFHTTPMessageSetNTLMAuthenticationOnRequest(CFHTTPMessageRef request, CFHTTPAut
 		CFDataRef blob = NULL;
 		CFStreamError error = {kCFStreamErrorDomainMacOSStatus, 0};
 
+#if defined(__MACH__)
 		if (!specifics[i]->_ntlm) {
 		
 			if (!specifics[i]->_negotiation && !specifics[i]->_authdata) {
@@ -1821,7 +1854,7 @@ _CFHTTPMessageSetNTLMAuthenticationOnRequest(CFHTTPMessageRef request, CFHTTPAut
 					error.error = NtlmCreateClientRequest(specifics[i]->_ntlm, &blob);
 			}
 		}
-		
+
 		else if (specifics[i]->_authdata) {
 
 			CFDataRef server = _CFDecodeBase64(alloc, specifics[i]->_authdata);
@@ -1832,6 +1865,7 @@ _CFHTTPMessageSetNTLMAuthenticationOnRequest(CFHTTPMessageRef request, CFHTTPAut
 			NtlmGeneratorRelease(specifics[i]->_ntlm);
 			specifics[i]->_ntlm = NULL;
 		}
+#endif
 
 		if (error.error) {
 			_CFHTTPAuthenticationSetError(auth, error.domain, error.error);
@@ -1858,7 +1892,8 @@ _CFHTTPAuthenticationCreateNTLMHeaderForRequest(CFHTTPAuthenticationRef auth, CF
 	CFStringRef header = NULL;
 	CFAllocatorRef alloc = CFGetAllocator(auth);
 	_AuthConnectionSpecific* specific = (_AuthConnectionSpecific*)CFDictionaryGetValue(auth->_connections, connection);
-	
+
+#if defined(__MACH__)
 	if (!specific) {
 		
 		CFDataRef blob = NULL;
@@ -1879,12 +1914,21 @@ _CFHTTPAuthenticationCreateNTLMHeaderForRequest(CFHTTPAuthenticationRef auth, CF
 			specific = (_AuthConnectionSpecific*)CFDictionaryGetValue(auth->_connections, connection);
 		}
 	}
-	
-	if (specific && specific->_negotiation && (specific->_ntlm || specific->_authdata)) {
-		
+#endif
+
+#if defined(__MACH__)
+        if (specific && specific->_negotiation && (specific->_ntlm || specific->_authdata)) {
+#else
+        if (specific && specific->_negotiation && specific->_authdata) {
+#endif
+          
 		header = CFStringCreateWithFormat(alloc, NULL, kCFHTTPAuthenticationNegotiateNTLMFormat, specific->_negotiation);
 		
+#if defined(__MACH__)
 		if (!specific->_ntlm && specific->_authdata) {
+#else
+        if (specific->_authdata) {
+#endif
 			CFRelease(specific->_authdata);
 			specific->_authdata = NULL;
 		}
@@ -2114,6 +2158,8 @@ CFHTTPAuthenticationRef CFHTTPAuthenticationCreateFromResponse(CFAllocatorRef al
         // downshift from Kerberos to NTLM for us.
         if (_CFSSPIPackageIsEnabled("Negotiate"))
             result->_preferred = current_scheme;
+#elif defined(__linux__)
+#warning "SPNEGO is not implemented on Linux"
 #else
 #error SPNEGO not supported, should be disabled on this platform
 #endif
@@ -2468,7 +2514,8 @@ Boolean _CFApplyCredentials_Unsafe(CFHTTPMessageRef request, CFHTTPAuthenticatio
 			_CFHTTPMessageSetNegotiateAuthenticationOnRequest(request, auth, username, password);
 			result = (auth->_error.error == 0);
 		}
-		else if (method == kCFHTTPAuthenticationSchemeNTLM) {
+
+        else if (method == kCFHTTPAuthenticationSchemeNTLM) {
 			_CFHTTPMessageSetNTLMAuthenticationOnRequest(request, auth, username, password, domain);
 			result = (auth->_error.error == 0);
         }
@@ -2771,11 +2818,19 @@ _CFHTTPAuthenticationConnectionAuthenticated(CFHTTPAuthenticationRef auth, const
 		CFStringRef method = _CFHTTPAuthenticationGetProperty(auth, kCFHTTPAuthenticationPropertyMethod);
 		
 		if (method == kCFHTTPAuthenticationSchemeNTLM) {
+#if defined (__MACH__)
 			result = !specific->_negotiation && specific->_authdata && !specific->_ntlm;
+#else
+			result = !specific->_negotiation && specific->_authdata;
+#endif
 		}
 		
 		else if (method == kCFHTTPAuthenticationSchemeNegotiate) {
+#if defined (__MACH__)
 			result = specific->_negotiation && specific->_authdata && !specific->_ntlm;
+#else
+			result = specific->_negotiation && specific->_authdata;
+#endif
 		}
 	}
 	

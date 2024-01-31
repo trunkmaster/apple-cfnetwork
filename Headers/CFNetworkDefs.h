@@ -25,7 +25,7 @@
  
      Contains:   CoreFoundation Network header
  
-     Copyright:  © 2001-2005 by Apple Computer, Inc., all rights reserved
+     Copyright:  ï¿½ 2001-2005 by Apple Computer, Inc., all rights reserved
  
      Warning:    *** APPLE INTERNAL USE ONLY ***
                  This file may contain unreleased API's
@@ -47,3 +47,7 @@
 
 #define CFNetwork_EXPORT extern
 
+#define CALLBACK_API(_type, _name)              _type ( * _name)
+#define CALLBACK_API_C(_type, _name)            _type ( * _name)
+#define CALLBACK_API_STDCALL(_type, _name)      _type ( * _name)
+#define CALLBACK_API_C_STDCALL(_type, _name)    _type ( * _name)

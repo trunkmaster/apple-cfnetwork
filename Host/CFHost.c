@@ -70,6 +70,7 @@
 	the master lookup will be canceled and removed from the master lookups list.
 */
 
+#if defined(__MACH__)
 
 #if 0
 #pragma mark -
@@ -2469,3 +2470,6 @@ CFHostUnscheduleFromRunLoop(CFHostRef theHost, CFRunLoopRef runLoop, CFStringRef
 	__CFSpinUnlock(&(host->_lock));
 }
 
+#else
+#warning "CFHost is not implemented on this platform!"
+#endif

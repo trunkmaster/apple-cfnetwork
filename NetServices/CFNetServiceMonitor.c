@@ -37,7 +37,9 @@
 #include "CFNetworkSchedule.h"
 
 #include <dns_sd.h>
+#if defined(__MACH__)
 #include <nameser.h>
+#endif
 
 
 #if 0
@@ -564,11 +566,13 @@ CFNetServiceMonitorStart(CFNetServiceMonitorRef theMonitor, CFNetServiceMonitorT
 			}
 		}
 		
+#if defined(__MACH__)
 		/* If it's the TXT monitor type, set up rrtype and rrclass correctly. */
 		if (recordType == kCFNetServiceMonitorTXT) {
 			rrtype = ns_t_txt;
 			rrclass = ns_c_in;
 		}
+#endif
 		
 		/* Get the raw data for the properties to send down to mdns */
 		for (i = 0; i < 3; i++) {

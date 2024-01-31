@@ -28,8 +28,11 @@
  *  Copyright 2004 __MyCompanyName__. All rights reserved.
  *
  */
+#include "CFNetworkInternal.h"
 
+#if defined(__MACH__)
 const name_t _CFNetDiagnosticMachPortName = "com.apple.NetworkDiagnostic.agent";
+#endif
 #define _CFNetDiagnosticMachProtocolVersion 1L
 
 const CFStringRef _CFNetDiagnosticNameKey = CFSTR("NDNameKey");

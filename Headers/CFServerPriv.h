@@ -25,7 +25,7 @@
  
      Contains:   CoreFoundation Network server SPI
  
-     Copyright:  © 2003-2005 by Apple Computer, Inc., all rights reserved
+     Copyright:  ï¿½ 2003-2005 by Apple Computer, Inc., all rights reserved
  
      Warning:    *** APPLE INTERNAL USE ONLY ***
                  This file contains unreleased SPI's
@@ -67,7 +67,9 @@
 extern "C" {
 #endif
 
+#if PRAGMA_OPTIONS_ALIGN
 #pragma options align=mac68k
+#endif
 
 
 /*
@@ -282,8 +284,9 @@ extern void
 _CFServerInvalidate(_CFServerRef server)                      AVAILABLE_MAC_OS_X_VERSION_10_3_AND_LATER;
 
 
-
+#if PRAGMA_OPTIONS_ALIGN
 #pragma options align=reset
+#endif
 
 #ifdef __cplusplus
 }

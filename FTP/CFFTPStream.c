@@ -39,8 +39,9 @@
 #include <CoreFoundation/CFPriv.h>
 #include <CFNetwork/CFHTTPConnectionPriv.h>  // for the asynchronous proxy lookup
 #include "CFNetworkSchedule.h"
+#if defined(__MACH__)
 #include <SystemConfiguration/SystemConfiguration.h>
-
+#endif
 
 #if 0
 #pragma mark *Win32 Specifics
@@ -77,7 +78,11 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#if defined(__MACH__)
 #include <sys/dirent.h>
+#else
+#include <dirent.h>
+#endif
 #include <netinet/tcp.h>
 #endif
 
@@ -89,6 +94,9 @@
 
 /* extern */ const SInt32 kCFStreamErrorDomainFTP = 6;
 
+#ifndef SOCK_MAXADDRLEN
+#define SOCK_MAXADDRLEN 255
+#endif
 
 #if 0
 #pragma mark -
@@ -1491,7 +1499,7 @@ _FTPStreamSetProperty(CFTypeRef stream, CFStringRef propertyName,
                 CFDictionaryRemoveValue(ctxt->_properties, propertyName);
                 result = TRUE;
             }
-            
+#if defined(__MACH__)            
             else if (CFGetTypeID(propertyValue) == CFDictionaryGetTypeID()) {
 
 				// Attempt to set the passive bit based upon proxy dictionary from SC.
@@ -1523,6 +1531,7 @@ _FTPStreamSetProperty(CFTypeRef stream, CFStringRef propertyName,
 				
                 result = TRUE;
             }
+#endif
         }
     }
     
@@ -2725,7 +2734,7 @@ _PASVAddressParser(const UInt8* buffer, struct sockaddr_in* saddr)
             } else {
                 host = ntohl(host);
                 memmove(&saddr->sin_addr, &host, sizeof(u_long));
-#if !defined(__WIN32__)
+#if !defined(__WIN32__) && !defined(__linux__)
                 saddr->sin_len = sizeof(saddr[0]);
 #endif
                 saddr->sin_family = AF_INET;
@@ -4675,10 +4684,10 @@ CFWriteStreamCreateWithFTPURL(CFAllocatorRef alloc, CFURLRef ftpURL) {
 			_FTPWriteStreamCallBacks.version = 1;
 			_FTPWriteStreamCallBacks.finalize = (void (*)(CFWriteStreamRef, void*))_FTPStreamFinalize;
 			_FTPWriteStreamCallBacks.copyDescription = (CFStringRef (*)(CFWriteStreamRef, void*))_FTPStreamCopyDescription;
-			_FTPWriteStreamCallBacks.open = (Boolean (*)(CFWriteStreamRef, CFStreamError*, Boolean*, void*))_FTPStreamOpen;
-			_FTPWriteStreamCallBacks.openCompleted = (Boolean (*)(CFWriteStreamRef, CFStreamError*, void*))_FTPStreamOpenCompleted;
-			_FTPWriteStreamCallBacks.write = (CFIndex (*)(CFWriteStreamRef, const UInt8*, CFIndex, CFStreamError*, void*))_FTPStreamWrite;
-			_FTPWriteStreamCallBacks.canWrite = (Boolean (*)(CFWriteStreamRef, void*))_FTPStreamCanWrite;
+			_FTPWriteStreamCallBacks.open = (Boolean (*)(CFWriteStreamRef, CFErrorRef*, Boolean*, void*))_FTPStreamOpen;
+			_FTPWriteStreamCallBacks.openCompleted = (Boolean (*)(CFWriteStreamRef, CFErrorRef*, void*))_FTPStreamOpenCompleted;
+			_FTPWriteStreamCallBacks.write = (CFIndex (*)(CFWriteStreamRef, const UInt8*, CFIndex, CFErrorRef*, void*))_FTPStreamWrite;
+			_FTPWriteStreamCallBacks.canWrite = (Boolean (*)(CFWriteStreamRef, CFErrorRef*, void*))_FTPStreamCanWrite;
 			_FTPWriteStreamCallBacks.close = (void (*)(CFWriteStreamRef, void*))_FTPStreamClose;
 			_FTPWriteStreamCallBacks.copyProperty = (CFTypeRef (*)(CFWriteStreamRef, CFStringRef, void*))_FTPStreamCopyProperty;
 			_FTPWriteStreamCallBacks.setProperty = (Boolean (*)(CFWriteStreamRef, CFStringRef, CFTypeRef, void*))_FTPStreamSetProperty;
@@ -4810,10 +4819,10 @@ CFReadStreamCreateWithFTPURL(CFAllocatorRef alloc, CFURLRef ftpURL) {
 			_FTPReadStreamCallBacks.version = 1;
 			_FTPReadStreamCallBacks.finalize = (void (*)(CFReadStreamRef, void*))_FTPStreamFinalize;
 			_FTPReadStreamCallBacks.copyDescription = (CFStringRef (*)(CFReadStreamRef, void*))_FTPStreamCopyDescription;
-			_FTPReadStreamCallBacks.open = (Boolean (*)(CFReadStreamRef, CFStreamError*, Boolean*, void*))_FTPStreamOpen;
-			_FTPReadStreamCallBacks.openCompleted = (Boolean (*)(CFReadStreamRef, CFStreamError*, void*))_FTPStreamOpenCompleted;
-			_FTPReadStreamCallBacks.read = (CFIndex (*)(CFReadStreamRef, UInt8*, CFIndex, CFStreamError*, Boolean*, void*))_FTPStreamRead;
-			_FTPReadStreamCallBacks.canRead = (Boolean (*)(CFReadStreamRef, void*))_FTPStreamCanRead;
+			_FTPReadStreamCallBacks.open = (Boolean (*)(CFReadStreamRef, CFErrorRef*, Boolean*, void*))_FTPStreamOpen;
+			_FTPReadStreamCallBacks.openCompleted = (Boolean (*)(CFReadStreamRef, CFErrorRef*, void*))_FTPStreamOpenCompleted;
+			_FTPReadStreamCallBacks.read = (CFIndex (*)(CFReadStreamRef, UInt8*, CFIndex, CFErrorRef*, Boolean*, void*))_FTPStreamRead;
+			_FTPReadStreamCallBacks.canRead = (Boolean (*)(CFReadStreamRef, CFErrorRef*, void*))_FTPStreamCanRead;
 			_FTPReadStreamCallBacks.close = (void (*)(CFReadStreamRef, void*))_FTPStreamClose;
 			_FTPReadStreamCallBacks.copyProperty = (CFTypeRef (*)(CFReadStreamRef, CFStringRef, void*))_FTPStreamCopyProperty;
 			_FTPReadStreamCallBacks.setProperty = (Boolean (*)(CFReadStreamRef, CFStringRef, CFTypeRef, void*))_FTPStreamSetProperty;

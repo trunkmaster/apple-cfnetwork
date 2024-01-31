@@ -78,6 +78,7 @@
 #if !defined(__WIN32__)
 #include <sys/types.h>
 #include <sys/socket.h>
+#define SOCK_MAXADDRLEN 255
 #else
 #include <winsock2.h>
 #define SOCK_MAXADDRLEN 255

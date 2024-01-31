@@ -37,12 +37,14 @@
 #if defined(__cplusplus)
 extern "C" {
 #endif
-	
-#if defined(__MACH__)
 
-#include <libkern/OSAtomic.h>
+#if !defined(__WIN32__)
 #include <pthread.h>					// For spin_lock stuff below
 #include <unistd.h>
+#endif
+	
+#if defined(__MACH__)
+#include <libkern/OSAtomic.h>
 	
 typedef OSSpinLock CFSpinLock_t;
 
@@ -68,6 +70,15 @@ CF_INLINE void __CFSpinLock(CFSpinLock_t *lockp) {
 CF_INLINE void __CFSpinUnlock(CFSpinLock_t *lockp) {
 	OSSpinLockUnlock(lockp);
 }
+
+#elif defined(__linux__)
+
+#include <CoreFoundation/CFLocking.h>
+
+typedef OSSpinLock CFSpinLock_t;
+
+#define __CFSpinLock(X) OSSpinLockLock(X)
+#define __CFSpinUnlock(X) OSSpinLockUnlock(X)
 
 #elif defined(__WIN32__)
 

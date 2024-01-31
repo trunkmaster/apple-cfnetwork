@@ -46,6 +46,7 @@
 #if defined(__MACH__)
 #include <JavaScriptGlue/JavaScriptGlue.h>
 #include <SystemConfiguration/SystemConfiguration.h>
+#endif
 
 
 #ifdef __CONSTANT_CFSTRINGS__
@@ -81,48 +82,30 @@
 #define _kProxySupportPacSupportFileName	CFSTR("PACSupport")
 #define _kProxySupportJSExtension			CFSTR("js")
 #define _kProxySupportExpiresHeader			CFSTR("Expires")
-#define _kProxySupportNowHeader                 CFSTR("Date")
+#define _kProxySupportNowHeader             CFSTR("Date")
 #else
-static CONST_STRING_DECL(_kProxySupportCFNetworkBundleID, "com.apple.CFNetwork")
-static CONST_STRING_DECL(_kProxySupportLocalhost, "localhost")
-static CONST_STRING_DECL(_kProxySupportIPv4Loopback, "127.0.0.1")
-static CONST_STRING_DECL(_kProxySupportIPv6Loopback, "::1")
-static CONST_STRING_DECL(_kProxySupportDot, ".")
-static CONST_STRING_DECL(_kProxySupportSlash, "/")
-static CONST_STRING_DECL(_kProxySupportDotZero, ".0")
-static CONST_STRING_DECL(_kProxySupportDotFormat, ".%@")
-static CONST_STRING_DECL(_kProxySupportStar, "*")
-static CONST_STRING_DECL(_kProxySupportColon, ":")
-static CONST_STRING_DECL(_kProxySupportSemiColon, ";")
-static CONST_STRING_DECL(_kProxySupportFILEScheme, "file")
-static CONST_STRING_DECL(_kProxySupportHTTPScheme, "http")
-static CONST_STRING_DECL(_kProxySupportHTTPSScheme, "https")
-static CONST_STRING_DECL(_kProxySupportHTTPPort, "80")
-static CONST_STRING_DECL(_kProxySupportFTPScheme, "ftp")
-static CONST_STRING_DECL(_kProxySupportFTPSScheme, "ftps")
-static CONST_STRING_DECL(_kProxySupportFTPPort, "21")
-static CONST_STRING_DECL(_kProxySupportSOCKS4Scheme, "socks4")
-static CONST_STRING_DECL(_kProxySupportSOCKS5Scheme, "socks5")
-static CONST_STRING_DECL(_kProxySupportSOCKSPort, "1080")
-static CONST_STRING_DECL(_kProxySupportDIRECT, "DIRECT")
-static CONST_STRING_DECL(_kProxySupportPROXY, "PROXY")
-static CONST_STRING_DECL(_kProxySupportSOCKS, "SOCKS")
-static CONST_STRING_DECL(_kProxySupportGETMethod, "GET")
-static CONST_STRING_DECL(_kProxySupportURLLongFormat, "%@://%@:%@@%@:%d")
-static CONST_STRING_DECL(_kProxySupportURLShortFormat, "%@://%@:%d")
-static CONST_STRING_DECL(_kProxySupportExceptionsList, "ExceptionsList")
-static CONST_STRING_DECL(_kProxySupportLoadingPacPrivateMode, "_kProxySupportLoadingPacPrivateMode")
-static CONST_STRING_DECL(_kProxySupportPacSupportFileName, "PACSupport")
-static CONST_STRING_DECL(_kProxySupportJSExtension, "js")
-static CONST_STRING_DECL(_kProxySupportExpiresHeader, "Expires")
-static CONST_STRING_DECL(_kProxySupportNowHeader, "Date")
+static CONST_STRING_DECL(
+    _kProxySupportCFNetworkBundleID,
+    "com.apple.CFNetwork") static CONST_STRING_DECL(_kProxySupportLocalhost,
+                                                    "localhos"
+                                                    "t") static CONST_STRING_DECL(_kProxySupportIPv4Loopback,
+                                                                                  "127.0.0.1") static CONST_STRING_DECL(_kProxySupportIPv6Loopback, "::1") static CONST_STRING_DECL(_kProxySupportDot, ".") static CONST_STRING_DECL(_kProxySupportSlash, "/") static CONST_STRING_DECL(_kProxySupportDotZero, ".0") static CONST_STRING_DECL(_kProxySupportDotFormat, ".%@") static CONST_STRING_DECL(_kProxySupportStar, "*") static CONST_STRING_DECL(_kProxySupportColon, ":") static CONST_STRING_DECL(_kProxySupportSemiColon, ";") static CONST_STRING_DECL(_kProxySupportFILEScheme, "file") static CONST_STRING_DECL(_kProxySupportHTTPScheme, "http") static CONST_STRING_DECL(_kProxySupportHTTPSScheme, "https") static CONST_STRING_DECL(_kProxySupportHTTPPort, "80") static CONST_STRING_DECL(_kProxySupportFTPScheme, "ftp") static CONST_STRING_DECL(_kProxySupportFTPSScheme, "ftps") static CONST_STRING_DECL(_kProxySupportFTPPort,
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 "21") static CONST_STRING_DECL(_kProxySupportSOCKS4Scheme,
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                "socks4") static CONST_STRING_DECL(_kProxySupportSOCKS5Scheme, "socks5") static CONST_STRING_DECL(_kProxySupportSOCKSPort,
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  "1080") static CONST_STRING_DECL(_kProxySupportDIRECT,
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   "DIRECT") static CONST_STRING_DECL(_kProxySupportPROXY,
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      "PROXY") static CONST_STRING_DECL(_kProxySupportSOCKS, "SOCKS") static CONST_STRING_DECL(_kProxySupportGETMethod, "GET") static CONST_STRING_DECL(_kProxySupportURLLongFormat,
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        "%@://%@:%@@%@:%d") static CONST_STRING_DECL(_kProxySupportURLShortFormat, "%@://%@:%d") static CONST_STRING_DECL(_kProxySupportExceptionsList, "ExceptionsList") static CONST_STRING_DECL(_kProxySupportLoadingPacPrivateMode,
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   "_kProxySupportLoadingPacPrivateMode") static CONST_STRING_DECL(_kProxySupportPacSupportFileName, "PACSupport") static CONST_STRING_DECL(_kProxySupportJSExtension, "js") static CONST_STRING_DECL(_kProxySupportExpiresHeader, "Expires") static CONST_STRING_DECL(_kProxySupportNowHeader, "Date")
 #endif	/* __CONSTANT_CFSTRINGS__ */
 
 
+#if defined(__MACH__)
 static JSObjectRef _JSDnsResolveFunction(void* context, JSObjectRef ctxt, CFArrayRef args);
 static JSObjectRef _JSPrimaryIpv4AddressesFunction(void* context, JSObjectRef ctxt, CFArrayRef args);
+#endif
 
-#elif defined(__WIN32__)
+#if defined(__WIN32__)
 
 #include <winsock2.h>
 #include <ws2tcpip.h>	// for ipv6
@@ -168,18 +151,21 @@ static const char *_CFDLLPath(void) {
 
 #endif	/* __WIN32__ */
 
+#if defined(__MACH__)
 static CFStringRef _JSFindProxyForURL(CFURLRef pac, CFURLRef url, CFStringRef host);
 static CFStringRef _JSFindProxyForURLAsync(CFURLRef pac, CFURLRef url, CFStringRef host, Boolean *mustBlock);
-
+#endif
 
 #define PAC_STREAM_LOAD_TIMEOUT		30.0
 
 static CFReadStreamRef BuildStreamForPACURL(CFAllocatorRef alloc, CFURLRef pacURL, CFURLRef targetURL, CFStringRef targetScheme, CFStringRef targetHost, _CFProxyStreamCallBack callback, void *clientInfo);
 static CFStringRef _loadJSSupportFile(void);
 static CFStringRef _loadPACFile(CFAllocatorRef alloc, CFURLRef pac, CFAbsoluteTime *expires, CFStreamError *err);
+#if defined(__MACH__)
 static JSRunRef _createJSRuntime(CFAllocatorRef alloc, CFStringRef js_support, CFStringRef js_pac);
 static void _freeJSRuntime(JSRunRef runtime);
 static CFStringRef _callPACFunction(CFAllocatorRef alloc, JSRunRef runtime, CFURLRef url, CFStringRef host);
+#endif
 static CFArrayRef _resolveDNSName(CFStringRef name);
 static CFReadStreamRef _streamForPACFile(CFAllocatorRef alloc, CFURLRef pac, Boolean *isFile);
 CFStringRef _stringFromLoadedPACStream(CFAllocatorRef alloc, CFMutableDataRef contents, CFReadStreamRef stream, CFAbsoluteTime *expires);
@@ -663,6 +649,7 @@ _CFNetworkFindProxyForURLAsync(CFStringRef scheme, CFURLRef url, CFStringRef hos
                     if (pac) {
                         Boolean mustLoad = FALSE;
                         CFStringRef list;
+#if defined(__MACH__)
                         if (callback) {
                             // Asynchronous
                             list = _JSFindProxyForURLAsync(pac, url, host, &mustLoad);
@@ -670,6 +657,7 @@ _CFNetworkFindProxyForURLAsync(CFStringRef scheme, CFURLRef url, CFStringRef hos
                              list = _JSFindProxyForURL(pac, url, host);
                              mustLoad = FALSE;
                         }
+#endif
 
                         if (mustLoad) {
                             *proxyStream = BuildStreamForPACURL(alloc, pac, url, scheme, host, callback, clientInfo);
@@ -1046,7 +1034,7 @@ _loadPACFile(CFAllocatorRef alloc, CFURLRef pac, CFAbsoluteTime *expires, CFStre
 }
 
 
-#if !defined(__WIN32__)
+#if defined(__MACH__)
 
 /* static */ JSRunRef
 _createJSRuntime(CFAllocatorRef alloc, CFStringRef js_support, CFStringRef js_pac) {
@@ -1158,7 +1146,7 @@ _callPACFunction(CFAllocatorRef alloc, JSRunRef runtime, CFURLRef url, CFStringR
 }
 
 
-#else
+#elif defined (__WIND32__)
 
 /*
  Doc on scripting interfaces:
@@ -1905,6 +1893,7 @@ _JSPrimaryIpv4AddressesFunction(void) {
 
 static CFURLRef _JSPacFileLocation = NULL;
 static CFAbsoluteTime _JSPacFileExpiration = 0;
+#if defined(__WIN32__)
 static JSRunRef _JSRuntime = NULL;
 
 /* Must be called while holding the _JSLock.  It is the caller's responsibility to verify that expires is a valid 
@@ -2004,6 +1993,7 @@ _JSFindProxyForURLAsync(CFURLRef pac, CFURLRef url, CFStringRef host, Boolean *m
 
     return result;
 }
+#endif
 
 // Platform independent piece of the DnsResolve callbacks
 static CFArrayRef
@@ -2215,6 +2205,7 @@ static CFReadStreamRef BuildStreamForPACURL(CFAllocatorRef alloc, CFURLRef pacUR
     return stream;
 }
 
+#if defined(__MACH__) || defined(__WIN32__)
 CFMutableArrayRef _CFNetworkCopyProxyFromProxyStream(CFReadStreamRef proxyStream, Boolean *isComplete) {
     CFStreamStatus status = CFReadStreamGetStatus(proxyStream);
     if (status == kCFStreamStatusOpen && CFReadStreamHasBytesAvailable(proxyStream)) {
@@ -2252,3 +2243,4 @@ CFMutableArrayRef _CFNetworkCopyProxyFromProxyStream(CFReadStreamRef proxyStream
         return NULL;
     }
 }
+#endif

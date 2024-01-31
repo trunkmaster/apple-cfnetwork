@@ -35,6 +35,8 @@
 #include <CFNetwork/CFSocketStreamPriv.h>
 #if defined(__MACH__)
 #include <SystemConfiguration/SCSchemaDefinitions.h> /* For the HTTP proxy keys */
+#endif
+#if defined(__MACH__) || defined (__linux__)
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -184,7 +186,7 @@ static Boolean httpRequestSetProperty(CFReadStreamRef stream, CFStringRef proper
 static void httpRequestSchedule(CFReadStreamRef stream, CFRunLoopRef runLoop, CFStringRef runLoopMode, void *info);
 static void httpRequestUnschedule(CFReadStreamRef stream, CFRunLoopRef runLoop, CFStringRef runLoopMode, void *info);
 
-static const CFReadStreamCallBacks _CFHTTPQueuedResponseStreamCallBacks = {
+static const CFReadStreamCallBacksV1 _CFHTTPQueuedResponseStreamCallBacks = {
     1,
     httpRequestCreate,
     httpRequestFinalize,
@@ -591,7 +593,7 @@ _CFHTTPRequest *createZombieDouble1(CFAllocatorRef alloc, _CFHTTPRequest *orig, 
     // way to do that is to look at its response stream.  So, we create a dummy response stream and schedule
     // it wherever orig->responseStream is scheduled.  Since we never open the stream, life should be good....
     zombie->responseStream = CFReadStreamCreateWithBytesNoCopy(alloc, (const UInt8*)"dummy zombie stream", strlen("dummy zombie stream"), kCFAllocatorNull);
-    origRLArray = _CFReadStreamGetRunLoopsAndModes(orig->responseStream);
+    origRLArray = _CFReadStreamCopyRunLoopsAndModes(orig->responseStream);
     if (origRLArray) {
         CFIndex i, c = CFArrayGetCount(origRLArray);
         for (i = 0; i + 1 < c; i += 2) {
@@ -599,6 +601,7 @@ _CFHTTPRequest *createZombieDouble1(CFAllocatorRef alloc, _CFHTTPRequest *orig, 
             CFStringRef mode = CFArrayGetValueAtIndex(origRLArray, i + 1);
             CFReadStreamScheduleWithRunLoop(zombie->responseStream, rl, mode);
         }
+        CFRelease(origRLArray);
     }
 #if defined(LOG_REQUESTS)
     fprintf(stderr, " returned zombie 0x%x\n", (int)zombie);
@@ -863,7 +866,7 @@ static void prepareTransmission1(_CFHTTPRequest *req, CFWriteStreamRef requestSt
     if (req->requestPayload) {
         CFArrayRef rlArray;
         CFReadStreamSetClient(req->requestPayload, kCFStreamEventHasBytesAvailable | kCFStreamEventErrorOccurred | kCFStreamEventEndEncountered, requestPayloadCallBack, &ctxt);
-        rlArray = _CFReadStreamGetRunLoopsAndModes(req->responseStream);
+        rlArray = _CFReadStreamCopyRunLoopsAndModes(req->responseStream);
         if (rlArray) {
             int i, c = CFArrayGetCount(rlArray);
             for (i = 0; i + 1 < c; i += 2) {
@@ -873,6 +876,7 @@ static void prepareTransmission1(_CFHTTPRequest *req, CFWriteStreamRef requestSt
                     CFReadStreamScheduleWithRunLoop(req->requestPayload, rl, mode);
                 }
             }
+            CFRelease(rlArray);
         }
         CFReadStreamOpen(req->requestPayload);
     }
@@ -1420,7 +1424,7 @@ static _CFNetConnectionRef getConnectionForRequest(_CFHTTPRequest *req, Boolean 
         }
     
         if (!req->proxyList) {
-            CFArrayRef rlArray = _CFReadStreamGetRunLoopsAndModes(req->responseStream);
+            CFArrayRef rlArray = _CFReadStreamCopyRunLoopsAndModes(req->responseStream);
             CFIndex count;
             // asynchronous proxy lookup is underway
             req->proxyStream = proxyStream;
@@ -1433,6 +1437,8 @@ static _CFNetConnectionRef getConnectionForRequest(_CFHTTPRequest *req, Boolean 
                     CFReadStreamScheduleWithRunLoop(proxyStream, rl, mode);
                 }
             }
+            if (rlArray)
+              CFRelease(rlArray);
         } else if (CFArrayGetCount(req->proxyList) == 0) {
             // Need a PAC error code here
             error->domain = kCFStreamErrorDomainHTTP;
@@ -2584,7 +2590,7 @@ void httpRequestStreamCallBack(void *info, CFWriteStreamRef stream, CFStreamEven
 static CFArrayRef httpRunLoopArrayForRequest(void *request, _CFNetConnectionRef conn, const void* info) {
     _CFHTTPRequest *req = (_CFHTTPRequest *)request;
     if (!req->responseStream) return NULL;
-    return _CFReadStreamGetRunLoopsAndModes(req->responseStream);
+    return CFAutorelease(_CFReadStreamCopyRunLoopsAndModes(req->responseStream));
 }
 
 

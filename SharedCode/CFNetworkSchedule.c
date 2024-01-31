@@ -32,8 +32,9 @@
 #include "CFNetworkSchedule.h"
 #include <CFNetwork/CFNetwork.h>
 
+#if defined(__MACH__)
 #include <SystemConfiguration/SystemConfiguration.h>
-
+#endif
 
 /* extern */ void
 _CFTypeScheduleOnRunLoop(CFTypeRef obj, CFRunLoopRef runLoop, CFStringRef runLoopMode) {
@@ -51,10 +52,12 @@ _CFTypeScheduleOnRunLoop(CFTypeRef obj, CFRunLoopRef runLoop, CFStringRef runLoo
 		src = CFRetain(obj);
 	}
 	
+#if defined(__MACH__)
 	else if (t == CFMachPortGetTypeID()) {
 		src = CFMachPortCreateRunLoopSource(CFGetAllocator(obj), (CFMachPortRef)obj, 0);
 	}
-	
+#endif
+
 	else if (t == CFSocketGetTypeID()) {
 		src = CFSocketCreateRunLoopSource(CFGetAllocator(obj), (CFSocketRef)obj, 0);
 	}
@@ -70,11 +73,12 @@ _CFTypeScheduleOnRunLoop(CFTypeRef obj, CFRunLoopRef runLoop, CFStringRef runLoo
 	else if (t == CFHostGetTypeID()) {
 		fn = (void(*)(CFTypeRef, CFRunLoopRef, CFStringRef))CFHostScheduleWithRunLoop;
 	}
-	
+#if defined(__MACH__)	
 	else if (t == SCNetworkReachabilityGetTypeID()) {
 		fn = (void(*)(CFTypeRef, CFRunLoopRef, CFStringRef))SCNetworkReachabilityScheduleWithRunLoop;
 	}
-	
+#endif
+        
 	else if (t == CFRunLoopTimerGetTypeID()) {
 		src = CFRetain(obj);
 		fn2 = (void(*)(CFRunLoopRef, CFTypeRef, CFStringRef))CFRunLoopAddTimer;
@@ -92,10 +96,11 @@ _CFTypeScheduleOnRunLoop(CFTypeRef obj, CFRunLoopRef runLoop, CFStringRef runLoo
 		fn = (void(*)(CFTypeRef, CFRunLoopRef, CFStringRef))CFNetServiceMonitorScheduleWithRunLoop;
 	}
 
+#if defined(__MACH__)
 	else if (t == SCNetworkConnectionGetTypeID()) {
 		fn = (void(*)(CFTypeRef, CFRunLoopRef, CFStringRef))SCNetworkConnectionScheduleWithRunLoop;
 	}
-	
+#endif	
 	
 	/* If a source was retrieved, need to add the source */
 	if (src) {
@@ -125,11 +130,13 @@ _CFTypeUnscheduleFromRunLoop(CFTypeRef obj, CFRunLoopRef runLoop, CFStringRef ru
 	if (t == CFRunLoopSourceGetTypeID()) {
 		src = CFRetain(obj);
 	}
-	
+
+#if defined(__MACH__)
 	else if (t == CFMachPortGetTypeID()) {
 		src = CFMachPortCreateRunLoopSource(CFGetAllocator(obj), (CFMachPortRef)obj, 0);
 	}
-	
+#endif
+        
 	else if (t == CFSocketGetTypeID()) {
 		src = CFSocketCreateRunLoopSource(CFGetAllocator(obj), (CFSocketRef)obj, 0);
 	}
@@ -145,11 +152,13 @@ _CFTypeUnscheduleFromRunLoop(CFTypeRef obj, CFRunLoopRef runLoop, CFStringRef ru
 	else if (t == CFHostGetTypeID()) {
 		fn = (void(*)(CFTypeRef, CFRunLoopRef, CFStringRef))CFHostUnscheduleFromRunLoop;
 	}
-	
+
+#if defined(__MACH__)        
 	else if (t == SCNetworkReachabilityGetTypeID()) {
 		fn = (void(*)(CFTypeRef, CFRunLoopRef, CFStringRef))SCNetworkReachabilityUnscheduleFromRunLoop;
 	}
-	
+#endif
+        
 	else if (t == CFRunLoopTimerGetTypeID()) {
 		src = CFRetain(obj);
 		fn2 = (void(*)(CFRunLoopRef, CFTypeRef, CFStringRef))CFRunLoopRemoveTimer;
@@ -166,11 +175,13 @@ _CFTypeUnscheduleFromRunLoop(CFTypeRef obj, CFRunLoopRef runLoop, CFStringRef ru
 	else if (t == CFNetServiceMonitorGetTypeID()) {
 		fn = (void(*)(CFTypeRef, CFRunLoopRef, CFStringRef))CFNetServiceMonitorUnscheduleFromRunLoop;
 	}
-	
+
+#if defined(__MACH__)        
 	else if (t == SCNetworkConnectionGetTypeID()) {
 		fn = (void(*)(CFTypeRef, CFRunLoopRef, CFStringRef))SCNetworkConnectionUnscheduleFromRunLoop;
 	}
-	
+#endif
+        
 	/* If a source was retrieved, need to remove it */
 	if (src) {
 		fn2(runLoop, src, runLoopMode);
@@ -204,11 +215,13 @@ _CFTypeScheduleOnMultipleRunLoops(CFTypeRef obj, CFArrayRef schedules) {
 		src = CFRetain(obj);
 		fn2 = (void(*)(CFRunLoopRef, CFTypeRef, CFStringRef))CFRunLoopAddTimer;
 	}
-	
+
+#if defined(__MACH__)        
 	else if (t == CFMachPortGetTypeID()) {
 		src = CFMachPortCreateRunLoopSource(CFGetAllocator(obj), (CFMachPortRef)obj, 0);
 	}
-	
+#endif
+        
 	else if (t == CFSocketGetTypeID()) {
 		src = CFSocketCreateRunLoopSource(CFGetAllocator(obj), (CFSocketRef)obj, 0);
 	}
@@ -236,7 +249,8 @@ _CFTypeScheduleOnMultipleRunLoops(CFTypeRef obj, CFArrayRef schedules) {
 	else if (t == CFNetServiceMonitorGetTypeID()) {
 		fn = (void(*)(CFTypeRef, CFRunLoopRef, CFStringRef))CFNetServiceMonitorScheduleWithRunLoop;
 	}
-	
+
+#if defined(__MACH__)        
 	else if (t == SCNetworkReachabilityGetTypeID()) {
 		fn = (void(*)(CFTypeRef, CFRunLoopRef, CFStringRef))SCNetworkReachabilityScheduleWithRunLoop;
 	}
@@ -244,7 +258,8 @@ _CFTypeScheduleOnMultipleRunLoops(CFTypeRef obj, CFArrayRef schedules) {
 	else if (t == SCNetworkConnectionGetTypeID()) {
 		fn = (void(*)(CFTypeRef, CFRunLoopRef, CFStringRef))SCNetworkConnectionScheduleWithRunLoop;
 	}
-	
+#endif
+        
 	/* If a source was retrieved, need to add the source to the list of run loops */
 	if (src) {
 		
@@ -288,11 +303,13 @@ _CFTypeUnscheduleFromMultipleRunLoops(CFTypeRef obj, CFArrayRef schedules) {
 	if (t == CFRunLoopSourceGetTypeID()) {
 		src = CFRetain(obj);
 	}
-	
+
+#if defined(__MACH__)        
 	else if (t == CFMachPortGetTypeID()) {
 		src = CFMachPortCreateRunLoopSource(CFGetAllocator(obj), (CFMachPortRef)obj, 0);
 	}
-	
+#endif
+        
 	else if (t == CFSocketGetTypeID()) {
 		src = CFSocketCreateRunLoopSource(CFGetAllocator(obj), (CFSocketRef)obj, 0);
 	}
@@ -308,11 +325,13 @@ _CFTypeUnscheduleFromMultipleRunLoops(CFTypeRef obj, CFArrayRef schedules) {
 	else if (t == CFHostGetTypeID()) {
 		fn = (void(*)(CFTypeRef, CFRunLoopRef, CFStringRef))CFHostUnscheduleFromRunLoop;
 	}
-	
+
+#if defined(__MACH__)        
 	else if (t == SCNetworkReachabilityGetTypeID()) {
 		fn = (void(*)(CFTypeRef, CFRunLoopRef, CFStringRef))SCNetworkReachabilityUnscheduleFromRunLoop;
 	}
-	
+#endif
+        
 	else if (t == CFRunLoopTimerGetTypeID()) {
 		src = CFRetain(obj);
 		fn2 = (void(*)(CFRunLoopRef, CFTypeRef, CFStringRef))CFRunLoopRemoveTimer;
@@ -329,11 +348,13 @@ _CFTypeUnscheduleFromMultipleRunLoops(CFTypeRef obj, CFArrayRef schedules) {
 	else if (t == CFNetServiceMonitorGetTypeID()) {
 		fn = (void(*)(CFTypeRef, CFRunLoopRef, CFStringRef))CFNetServiceMonitorUnscheduleFromRunLoop;
 	}
-	
+
+#if defined(__MACH__)        
 	else if (t == SCNetworkConnectionGetTypeID()) {
 		fn = (void(*)(CFTypeRef, CFRunLoopRef, CFStringRef))SCNetworkConnectionUnscheduleFromRunLoop;
 	}
-	
+#endif
+        
 	/* If a source was retrieved, need to remove it from the list of run loops*/
 	if (src) {
 		
@@ -371,11 +392,13 @@ _CFTypeInvalidate(CFTypeRef obj) {
 	if (t == CFRunLoopSourceGetTypeID()) {
 		CFRunLoopSourceInvalidate((CFRunLoopSourceRef)obj);
 	}
-	
+
+#if defined(__MACH__)        
 	else if (t == CFMachPortGetTypeID()) {
 		CFMachPortInvalidate((CFMachPortRef)obj);
 	}
-	
+#endif
+        
 	else if (t == CFSocketGetTypeID()) {
 		CFSocketInvalidate((CFSocketRef)obj);
 	}
@@ -392,11 +415,13 @@ _CFTypeInvalidate(CFTypeRef obj) {
 	else if (t == CFHostGetTypeID()) {
 		CFHostSetClient((CFHostRef)obj, NULL, NULL);
 	}
-	
+
+#if defined(__MACH__)        
 	else if (t == SCNetworkReachabilityGetTypeID()) {
 		SCNetworkReachabilitySetCallback((SCNetworkReachabilityRef)obj, NULL, NULL);
 	}
-	
+#endif
+        
 	else if (t == CFRunLoopTimerGetTypeID()) {
 		CFRunLoopTimerInvalidate((CFRunLoopTimerRef)obj);
 	}
@@ -412,10 +437,12 @@ _CFTypeInvalidate(CFTypeRef obj) {
 	else if (t == CFNetServiceMonitorGetTypeID()) {
 		CFNetServiceMonitorInvalidate((CFNetServiceMonitorRef)obj);
 	}
-	
+
+#if defined(__MACH__)        
 	else if (t == SCNetworkReachabilityGetTypeID()) {
 		SCNetworkConnectionStop((SCNetworkConnectionRef)obj, FALSE);
 	}
+#endif	
 }
 
 

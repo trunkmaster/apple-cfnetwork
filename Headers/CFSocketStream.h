@@ -25,7 +25,7 @@
  
      Contains:   CoreFoundation Network socket streams header
  
-     Copyright:  © 2001-2005 by Apple Computer, Inc., all rights reserved
+     Copyright:  ï¿½ 2001-2005 by Apple Computer, Inc., all rights reserved
  
      Warning:    *** APPLE INTERNAL USE ONLY ***
                  This file may contain unreleased API's
@@ -95,6 +95,8 @@ extern "C" {
  *    Non-Carbon CFM:   not available
  */
 extern const CFStringRef kCFStreamPropertySSLPeerCertificates        AVAILABLE_MAC_OS_X_VERSION_10_4_AND_LATER;
+extern const CFStringRef _kCFStreamPropertySSLClientCertificates     AVAILABLE_MAC_OS_X_VERSION_10_4_AND_LATER;
+extern const CFStringRef _kCFStreamPropertySSLClientCertificateState AVAILABLE_MAC_OS_X_VERSION_10_4_AND_LATER;
 
 /*
  *  kCFStreamPropertySSLSettings

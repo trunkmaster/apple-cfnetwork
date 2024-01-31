@@ -345,7 +345,7 @@ UInt8 *_CFURLPortionForRequest(CFAllocatorRef alloc, CFURLRef url, Boolean useCo
         // First byte is the byte of the path....
         CFRange pathWithSeparators;
         urlRg = CFURLGetByteRangeForComponent(absURL, kCFURLComponentPath, &pathWithSeparators);
-        if (!urlRg.location == kCFNotFound || urlRg.length == 0) {
+        if (!(urlRg.location == kCFNotFound) || urlRg.length == 0) {
             *(urlBytes + pathWithSeparators.location - 1) = '/';
             prependedSlash = TRUE;
             urlRg = pathWithSeparators;

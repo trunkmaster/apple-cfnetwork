@@ -330,7 +330,7 @@ _CFServerStart(_CFServerRef server, CFStringRef name, CFStringRef type, UInt32 p
 		memset(&addr4, 0, sizeof(addr4));
 		
 		// Put the local port and address into the native address.
-#if !defined(__WIN32__)
+#if defined(__MACH__)
         addr4.sin_len = sizeof(addr4);
 #endif
 		addr4.sin_family = AF_INET;
@@ -363,7 +363,9 @@ _CFServerStart(_CFServerRef server, CFStringRef name, CFStringRef type, UInt32 p
         addr6.sin6_family = AF_INET6;
 #ifndef __WIN32__
         addr6.sin6_port = htons((UInt16)port);
+#if defined(__MACH__)
         addr6.sin6_len = sizeof(addr6);
+#endif
         memcpy(&(addr6.sin6_addr), &in6addr_any, sizeof(addr6.sin6_addr));
 #else
 #ifndef __MINGW32__

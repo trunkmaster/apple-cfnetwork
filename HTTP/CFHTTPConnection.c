@@ -2,14 +2,14 @@
  * Copyright (c) 2005 Apple Computer, Inc. All rights reserved.
  *
  * @APPLE_LICENSE_HEADER_START@
- * 
+ *
  * This file contains Original Code and/or Modifications of Original Code
  * as defined in and that are subject to the Apple Public Source License
  * Version 2.0 (the 'License'). You may not use this file except in
  * compliance with the License. Please obtain a copy of the License at
  * http://www.opensource.apple.com/apsl/ and read it before using this
  * file.
- * 
+ *
  * The Original Code and all software distributed under the License are
  * distributed on an 'AS IS' basis, WITHOUT WARRANTY OF ANY KIND, EITHER
  * EXPRESS OR IMPLIED, AND APPLE HEREBY DISCLAIMS ALL SUCH WARRANTIES,
@@ -17,9 +17,11 @@
  * FITNESS FOR A PARTICULAR PURPOSE, QUIET ENJOYMENT OR NON-INFRINGEMENT.
  * Please see the License for the specific language governing rights and
  * limitations under the License.
- * 
+ *
  * @APPLE_LICENSE_HEADER_END@
  */
+#include <CoreFoundation/CFStreamAbstract.h>
+
 #include "CFHTTPConnectionInternal.h"
 #include "CFHTTPInternal.h"
 #include <sys/types.h>
@@ -137,7 +139,7 @@ static _CFHTTPStreamInfo *createZombieDouble(CFAllocatorRef alloc, _CFHTTPStream
     // way to do that is to look at its response stream.  So, we create a dummy response stream and schedule
     // it wherever orig->responseStream is scheduled.  Since we never open the stream, life should be good....
     zombie->stream = CFReadStreamCreateWithBytesNoCopy(alloc, (const UInt8*)"dummy zombie stream", strlen("dummy zombie stream"), kCFAllocatorNull);
-    origRLArray = _CFReadStreamGetRunLoopsAndModes(orig->stream);
+    origRLArray = _CFReadStreamCopyRunLoopsAndModes(orig->stream);
     if (origRLArray) {
         CFIndex i, c = CFArrayGetCount(origRLArray);
         for (i = 0; i + 1 < c; i += 2) {
@@ -145,6 +147,7 @@ static _CFHTTPStreamInfo *createZombieDouble(CFAllocatorRef alloc, _CFHTTPStream
             CFStringRef mode = CFArrayGetValueAtIndex(origRLArray, i + 1);
             CFReadStreamScheduleWithRunLoop(zombie->stream, rl, mode);
         }
+        CFRelease(origRLArray);
     }
     return zombie;
 }
@@ -168,11 +171,11 @@ static const CFReadStreamCallBacks HTTPStreamCallBacks = {
     httpStreamCreate,
     httpStreamFinalize,
     httpStreamCopyDescription,
-    httpStreamOpen,
-    httpStreamOpenCompleted,
-    httpStreamRead,
+    (Boolean (*)(CFReadStreamRef, CFErrorRef*, Boolean*, void*))httpStreamOpen,
+    (Boolean (*)(CFReadStreamRef, CFErrorRef*, void*))httpStreamOpenCompleted,
+    (CFIndex (*)(CFReadStreamRef, UInt8*, CFIndex, CFErrorRef*, Boolean*, void*))httpStreamRead,
     NULL,
-    httpStreamCanRead,
+    (Boolean (*)(CFReadStreamRef, CFErrorRef*, void*))httpStreamCanRead,
     httpStreamClose,
     httpStreamCopyProperty,
     httpStreamSetProperty,
@@ -362,7 +365,7 @@ static void prepareTransmission(_CFHTTPStreamInfo *streamInfo, CFWriteStreamRef 
     if (streamInfo->requestPayload) {
         CFArrayRef rlArray;
         CFReadStreamSetClient(streamInfo->requestPayload, kCFStreamEventHasBytesAvailable | kCFStreamEventErrorOccurred | kCFStreamEventEndEncountered, httpRequestPayloadCallBack, &ctxt);
-        rlArray = _CFReadStreamGetRunLoopsAndModes(streamInfo->stream);
+        rlArray = _CFReadStreamCopyRunLoopsAndModes(streamInfo->stream);
         if (rlArray) {
             int i, c = CFArrayGetCount(rlArray);
             for (i = 0; i + 1 < c; i += 2) {
@@ -372,6 +375,7 @@ static void prepareTransmission(_CFHTTPStreamInfo *streamInfo, CFWriteStreamRef 
                     CFReadStreamScheduleWithRunLoop(streamInfo->requestPayload, rl, mode);
                 }
             }
+            CFRelease(rlArray);
         }
         CFReadStreamOpen(streamInfo->requestPayload);
     }
@@ -943,7 +947,7 @@ static void httpRequestPayloadCallBack(CFReadStreamRef stream, CFStreamEventType
 static CFArrayRef httpConnectionRLArrayForRequest(void *request, _CFNetConnectionRef conn, const void *info) {
     _CFHTTPStreamInfo *streamInfo = (_CFHTTPStreamInfo *)request;
     if (!streamInfo->stream) return NULL;
-    return _CFReadStreamGetRunLoopsAndModes(streamInfo->stream);
+    return CFAutorelease(_CFReadStreamCopyRunLoopsAndModes(streamInfo->stream));
 }
 
 CFReadStreamRef CFHTTPConnectionEnqueue(CFHTTPConnectionRef connection, CFHTTPMessageRef request) {

@@ -129,6 +129,7 @@
 
 
 
+#if defined(__MACH__)
 /* SimpleRoutine passDescriptor */
 mig_external kern_return_t _CFNetDiagnosticClient_passDescriptor
 (
@@ -222,3 +223,4 @@ mig_external kern_return_t _CFNetDiagnosticClient_passDescriptor
 	return KERN_SUCCESS;
     }
 }
+#endif

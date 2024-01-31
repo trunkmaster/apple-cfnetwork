@@ -34,7 +34,7 @@
 #include <CFNetwork/CFFTPStreamPriv.h>
 
 // Internal prototypes.  What does it mean that these functions are exported from
-// CFNetwork, but not used in any other file, or present in any header file? ¥DCJ¥
+// CFNetwork, but not used in any other file, or present in any header file? ï¿½DCJï¿½
 CFNetwork_EXPORT
 CFHTTPMessageRef _CFHTTPMessageSendRequest(CFHTTPMessageRef request);
 
@@ -376,7 +376,7 @@ static Boolean _CFFTPURLDestroyResource(CFURLRef url, SInt32 *errorCode) {
 	CFWriteStreamSetProperty(writeStream, _kCFStreamPropertyFTPRemoveResource, kCFBooleanTrue);
 	
 	if (CFWriteStreamOpen(writeStream)) {
-		CFWriteStreamWrite(writeStream, "a", 1);
+		CFWriteStreamWrite(writeStream, (const unsigned char *)"a", 1);
 		CFWriteStreamClose(writeStream);
 	}
 	

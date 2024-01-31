@@ -24,6 +24,7 @@
 #include <CFNetwork/CFHTTPMessage.h>
 #include <CFNetwork/CFHTTPStream.h>
 #include <CFNetwork/CFHTTPStreamPriv.h>
+#include <CoreFoundation/CFStreamInternal.h>
 #include <CFNetwork/CFSocketStream.h>
 #include <CoreFoundation/CFStreamPriv.h>
 #include <CFNetwork/CFSocketStreamPriv.h>
@@ -1349,17 +1350,22 @@ static Boolean httpRdFilterSetProperty(CFReadStreamRef stream, CFStringRef propN
     }
 }
 
-static const CFReadStreamCallBacks HTTPReadFilterCallBacks = {1, 
-httpRdFilterCreate
-, httpRdFilterDealloc
-, NULL /*copyDesc*/, httpRdFilterOpen
-, NULL /*openCompleted*/, httpRdFilterRead
-, NULL /*getBuffer*/, httpRdFilterCanRead
-, httpRdFilterClose
-, httpRdFilterCopyProperty
-, httpRdFilterSetProperty
-, NULL /*atEnd*/, httpRdFilterSchedule
-, httpRdFilterUnschedule};
+static const CFReadStreamCallBacks HTTPReadFilterCallBacks = {
+    1,
+    httpRdFilterCreate,
+    httpRdFilterDealloc,
+    NULL /*copyDesc*/,
+    (Boolean(*)(CFReadStreamRef, CFErrorRef *, Boolean *, void *))httpRdFilterOpen,
+    NULL /*openCompleted*/,
+    (CFIndex(*)(CFReadStreamRef, UInt8 *, CFIndex, CFErrorRef *, Boolean *, void *))httpRdFilterRead,
+    NULL /*getBuffer*/,
+    (Boolean (*)(CFReadStreamRef, CFErrorRef*, void*))httpRdFilterCanRead,
+    httpRdFilterClose,
+    httpRdFilterCopyProperty,
+    httpRdFilterSetProperty,
+    NULL /*atEnd*/,
+    httpRdFilterSchedule,
+    httpRdFilterUnschedule};
 
 CF_EXPORT
 CFReadStreamRef CFReadStreamCreateHTTPStream(CFAllocatorRef alloc, CFReadStreamRef readStream, Boolean forResponse) {
@@ -1935,9 +1941,9 @@ static void httpWrFilterUnschedule(CFWriteStreamRef stream, CFRunLoopRef runLoop
 static const CFWriteStreamCallBacks httpFilteredStreamCBs = {1, 
 httpWrFilterCreate, 
 httpWrFilterDealloc, NULL /* copyDesc */, 
-httpWrFilterOpen, NULL /* openCompleted */, 
-httpWrFilterWrite, 
-httpWrFilterCanWrite, 
+(Boolean (*)(CFWriteStreamRef, CFErrorRef*, Boolean*, void*))httpWrFilterOpen, NULL /* openCompleted */, 
+(CFIndex (*)(CFWriteStreamRef, const UInt8*, CFIndex, CFErrorRef*, void*))httpWrFilterWrite, 
+(Boolean (*)(CFWriteStreamRef, CFErrorRef*, void*))httpWrFilterCanWrite, 
 httpWrFilterClose, 
 httpWrFilterCopyProperty, 
 httpWrFilterSetProperty, NULL, 

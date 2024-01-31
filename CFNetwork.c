@@ -620,7 +620,7 @@ _CFStringCreateRFC1123DateStringWithGregorianDate(CFAllocatorRef alloc, CFGregor
 	if (tz) {
 		CFTimeInterval offset = CFTimeZoneGetSecondsFromGMT(tz, 0.0);
 		hour = offset / 3600;
-		minute = abs(offset - (hour * 3600));
+		minute = fabs(offset - (hour * 3600));
 	}
 	
 	if (CFGregorianDateIsValid(*date, kCFGregorianAllUnits)) {
