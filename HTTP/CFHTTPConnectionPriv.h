@@ -25,7 +25,7 @@
  
      Contains:   CoreFoundation Network HTTP connection SPI
  
-     Copyright:  © 2004-2005 by Apple Computer, Inc., all rights reserved
+     Copyright:  ï¿½ 2004-2005 by Apple Computer, Inc., all rights reserved
  
      Warning:    *** APPLE INTERNAL USE ONLY ***
                  This file contains unreleased SPI's
@@ -486,33 +486,34 @@ _CFNetworkFindProxyForURLAsync(
 
 /*
  *  _CFNetworkCopyProxyFromProxyStream()
- *  
+ *
  *  Discussion:
  *    Once an asynchronous search for the correct proxy has begun (via
  *    _CFNetworkFindProxyForURLAsync, above), call this function to
  *    discover whether the correct proxy has been found, and if so,
  *    what that proxy is.
- *  
+ *
  *  Parameters:
- *    
+ *
  *    proxyStream:
  *      The proxy stream returned by _CFNetworkFindProxyForURLAsync,
  *      above
- *    
+ *
  *    isComplete:
  *      This out parameter is set to true if the asynchronous search is
  *      now complete, or false otherwise.
- *  
+ *
  *  Result:
  *    A CFMutableArrayRef giving the discovered proxies, in the same
  *    format as returned by _CFNetworkFindProxyForURLAsync, above.
- *  
+ *
  */
+#if defined(__MACH__) || defined(__WIN32__)
 extern CFMutableArrayRef 
 _CFNetworkCopyProxyFromProxyStream(
   CFReadStreamRef   proxyStream,
   Boolean *         isComplete)                               AVAILABLE_MAC_OS_X_VERSION_10_4_AND_LATER;
-
+#endif
 
 
 #if PRAGMA_ENUM_ALWAYSINT

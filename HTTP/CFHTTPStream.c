@@ -1300,7 +1300,9 @@ static CFHTTPAuthenticationRef connectionOrientedAuth(_CFHTTPRequest *http, Bool
 static void setConnectionFromProxyStream(_CFHTTPRequest *http, CFStreamError *err) {
     Boolean isComplete;
     err->domain = 0;
+#if defined(__MACH__) || defined(__WIN32__)
     http->proxyList = _CFNetworkCopyProxyFromProxyStream(http->proxyStream, &isComplete);
+#endif
     if (!isComplete) {
         return;
     }
