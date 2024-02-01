@@ -204,6 +204,7 @@ extern void __WaitForHandshakeToComplete_Unsafe(_CFSocketStreamContext* ctxt);
 
 #define __socketGetFD(ctxt)	((int)((__CFBitIsSet(ctxt->flags, CREATED_WITH_SOCKET)) ? ctxt->u.sock : (ctxt->sock ? CFSocketGetNative(ctxt->sock) : -1)))
 
+#if defined(__MACH__) || defined(__WIN32__)
 
 // SSL routines used by CFSocketStream.c, implemented on both Mach and Win32
 
@@ -218,6 +219,8 @@ extern void performSSLSendHandshake(_CFSocketStreamContext* ctxt);
 extern Boolean __SetSecuritySettings_Unsafe(_CFSocketStreamContext* ctxt, CFDictionaryRef settings);
 extern CFStringRef __GetSSLProtocol(_CFSocketStreamContext* ctxt);
 extern SSLSessionState __GetSSLSessionState(_CFSocketStreamContext* ctxt);
+
+#endif /* __MACH__ or __WIN32__ */
 
 #if 0
 #define SSL_LOG printf

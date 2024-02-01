@@ -21,7 +21,9 @@ find_package(Threads REQUIRED)
 include(GNUInstallDirs)
 include(CoreFoundationAddFramework)
 
+# for getaddrinfo_a
 add_compile_definitions($<$<COMPILE_LANGUAGE:C>:_GNU_SOURCE>)
+add_compile_definitions($<$<COMPILE_LANGUAGE:C>:HAVE_GETADDRINFO_A>)
 
 add_compile_options($<$<COMPILE_LANGUAGE:C>:-fblocks>)
 add_compile_options($<$<COMPILE_LANGUAGE:C>:-Wno-void-pointer-to-int-cast>)
@@ -94,6 +96,7 @@ add_framework(CFNetwork
                 Proxies/ProxySupport.c
                 # Stream
                 Stream/CFSocketStream.c
+                Stream/CFStreamError.c
                 # URL
                 URL/_CFURLAccess.c
                 #
