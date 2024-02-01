@@ -3406,8 +3406,10 @@ _CFFTPGetDateTimeFunc(CFAllocatorRef alloc, const UInt8* str, CFIndex length, CF
 _ProxyStreamCallBack(CFReadStreamRef proxyStream, _CFFTPStreamContext* ctxt) {
 
     Boolean complete = FALSE;
-    
+
+#if defined(__MACH__) || defined(__WIN32__)
     ctxt->_proxies = _CFNetworkCopyProxyFromProxyStream(ctxt->_proxyStream, &complete);
+#endif
 
     if (complete) {
 
