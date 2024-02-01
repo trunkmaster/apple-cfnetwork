@@ -35,35 +35,48 @@ add_framework(CFNetwork
               FRAMEWORK_DIRECTORY
                 CFNetwork_FRAMEWORK_DIRECTORY
               PRIVATE_HEADERS
-                Headers/CFFTPStreamPriv.h
-                Headers/CFHostPriv.h
-                Headers/CFHTTPConnectionPriv.h
-                Headers/CFHTTPMessagePriv.h
-                Headers/CFHTTPServerPriv.h
-                Headers/CFHTTPStreamPriv.h
-                Headers/CFNetDiagnosticsPriv.h
-                Headers/CFNetServicesPriv.h
-                Headers/CFNetworkPriv.h
-                Headers/CFServerPriv.h
-                Headers/CFSocketStreamPriv.h
+                CFNetworkPriv.h
+                # FTP
+                FTP/CFFTPStreamPriv.h
+                # Host
+                Host/CFHostPriv.h
+                # HTTP
+                HTTP/CFHTTPConnectionPriv.h
+                HTTP/CFHTTPMessagePriv.h
+                HTTP/CFHTTPServerPriv.h
+                HTTP/CFHTTPStreamPriv.h
+                HTTP/CFHTTPInternal.h
+                HTTP/CFHTTPConnectionInternal.h
+                # NetDiagnostics
+                NetDiagnostics/CFNetDiagnosticsPriv.h
+                # NetServices
+                NetServices/CFNetServicesPriv.h
+                # Stream
+                Stream/CFSocketStreamPriv.h
                 # SharedCode
+                SharedCode/CFServerPriv.h
                 SharedCode/CFNetworkThreadSupport.h
                 SharedCode/CFNetworkSchedule.h
                 SharedCode/CFNetConnection.h
+                # Proxies
                 Proxies/ProxySupport.h
-                HTTP/CFHTTPInternal.h
-                HTTP/CFHTTPConnectionInternal.h
               PUBLIC_HEADERS
-                Headers/CFFTPStream.h 
-                Headers/CFHost.h
-                Headers/CFHTTPAuthentication.h
-                Headers/CFHTTPMessage.h
-                Headers/CFHTTPStream.h
-                Headers/CFNetDiagnostics.h 
-                Headers/CFNetServices.h 
-                Headers/CFNetwork.h
-                Headers/CFNetworkDefs.h
-                Headers/CFSocketStream.h
+                CFNetwork.h
+                CFNetworkDefs.h
+                # FTP
+                FTP/CFFTPStream.h
+                # Host
+                Host/CFHost.h
+                # HTTP
+                HTTP/CFHTTPAuthentication.h
+                HTTP/CFHTTPMessage.h
+                HTTP/CFHTTPStream.h
+                # NetDiagnostics
+                NetDiagnostics/CFNetDiagnostics.h
+                # NetServices
+                NetServices/CFNetServices.h
+                # Stream
+                Stream/CFSocketStream.h
               SOURCES
                 CFNetwork.c 
                 # SharedCode
@@ -71,7 +84,6 @@ add_framework(CFNetwork
                 SharedCode/CFNetConnection.c
                 SharedCode/CFNetworkSchedule.c
                 SharedCode/CFNetworkThreadSupport.c
-                #SharedCode/CFStreamError.c
                 # Host
                 Host/CFHost.c
                 # FTP
@@ -99,7 +111,7 @@ add_framework(CFNetwork
                 Stream/CFStreamError.c
                 # URL
                 URL/_CFURLAccess.c
-                #
+                # Unsupported
                 #JavaScriptGlue.c
                 #libresolv.c
 )
