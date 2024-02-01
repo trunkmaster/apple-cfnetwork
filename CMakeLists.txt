@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.12)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules)
 
 project(CFNetwork
-        VERSION 129.0.20
+        VERSION 129.20
         LANGUAGES C CXX)
 
 set(CMAKE_C_STANDARD 99)
