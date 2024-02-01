@@ -10,13 +10,20 @@ project(CFNetwork
 
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED YES)
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
 set(CMAKE_POSITION_INDEPENDENT_CODE YES)
+
+# compile_commands.json
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 set(THREADS_PREFER_PTHREAD_FLAG OFF)
 find_package(Threads REQUIRED)
+
+include (FindPkgConfig)
+pkg_check_modules(AVAHI_COMPAT REQUIRED avahi-compat-libdns_sd)
+if(AVAHI_COMPAT_FOUND)
+  set(CFNETWORK_LDLAGS "${CFNETWORK_LDLAGS} -ldns_sd")
+endif()
 
 include(GNUInstallDirs)
 include(CoreFoundationAddFramework)
