@@ -25,7 +25,7 @@
  
      Contains:   CoreFoundation CFHost header
  
-     Copyright:  ï¿½ 2001-2005 by Apple Computer, Inc., all rights reserved
+     Copyright:  © 2001-2005 by Apple Computer, Inc., all rights reserved
  
      Warning:    *** APPLE INTERNAL USE ONLY ***
                  This file may contain unreleased API's
@@ -54,9 +54,6 @@
 #include <CoreFoundation/CoreFoundation.h>
 #endif
 
-
-
-
 #include <AvailabilityMacros.h>
 
 #if PRAGMA_ONCE
@@ -68,13 +65,17 @@ extern "C" {
 #endif
 
 #if PRAGMA_OPTIONS_ALIGN
-#pragma options align=mac68k
+    #pragma options align=mac68k
 #endif
 
 #if PRAGMA_ENUM_ALWAYSINT
     #pragma enumsalwaysint on
 #endif
 
+#define CALLBACK_API(_type, _name)              _type ( * _name)
+#define CALLBACK_API_C(_type, _name)            _type ( * _name)
+#define CALLBACK_API_STDCALL(_type, _name)      _type ( * _name)
+#define CALLBACK_API_C_STDCALL(_type, _name)    _type ( * _name)
 
 /*
  *  CFHostRef
@@ -664,7 +665,7 @@ CFHostUnscheduleFromRunLoop(
 #endif
 
 #if PRAGMA_OPTIONS_ALIGN
-#pragma options align = reset
+    #pragma options align=reset
 #endif
 
 #ifdef __cplusplus
