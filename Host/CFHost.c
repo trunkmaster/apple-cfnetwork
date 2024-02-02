@@ -1082,6 +1082,9 @@ done:
     close(sigfd);
 
   } else {
+    CFRunLoopSourceRef rlSource = CFFileDescriptorCreateRunLoopSource(kCFAllocatorSystemDefault, result, 0);
+    CFRunLoopAddSource(CFRunLoopGetCurrent(), rlSource, kCFRunLoopDefaultMode);
+    CFRelease(rlSource);
     CFFileDescriptorEnableCallBacks(result, kCFFileDescriptorReadCallBack);
   }
 
