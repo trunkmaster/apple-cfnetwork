@@ -160,15 +160,15 @@ typedef struct {
   CFHostClientContext    _client;
 } _CFHost;
 
-#if defined(__linux__) && (HAVE_GETADDRINFO_A)
+#if defined(__linux__)
 /**
  *  @brief
  *    The active heap-based object used to manage forward DNS look-ups
  *    with Linux, glibc, and getaddrinfo_a.
  *
- *  This represents all of the active state needed to manage
- *  outstanding forward DNS look-ups using Linux, glibc, and
- *  getaddrinfo_a.
+ *    This represents all of the active state needed to manage
+ *    outstanding forward DNS look-ups using Linux, glibc, and
+ *    getaddrinfo_a.
  *
  *  @note
  *    Since there is no equivalent getnameinfo_a in Linux with glibc,
@@ -181,7 +181,7 @@ typedef struct {
   struct addrinfo _request_hints;
   struct gaicb* _request_list[1];
 } _CFHostGAIARequest;
-#endif /* __linux__ && HAVE_GETADDRINFO_A */
+#endif /* __linux__ */
 
 /**
  *  The callback type used for deallocating addrinfo.
@@ -211,9 +211,10 @@ static CFTypeRef _CreateAddressLookup(CFStringRef name, CFHostInfoType info, voi
 static CFTypeRef _CreateNameLookup(CFDataRef address, void* context, CFStreamError* error);
 static CFTypeRef _CreateDNSLookup(CFTypeRef thing, CFHostInfoType info, void* context, CFStreamError* error);
 
-#if defined(__MACH__) || (HAVE_GETADDRINFO_A)
+#if defined(__MACH__) || defined(__linux__)
 static void _GetAddrInfoCallBack(int eai_status, const struct addrinfo* res, void* ctxt);
 #endif
+
 static void _GetAddrInfoCallBackWithFree(int eai_status, const struct addrinfo* res, void* ctxt, FreeAddrInfoCallBack freeaddrinfo_cb);
 static void _GetNameInfoCallBackWithFreeAndWithShouldLock(int eai_status, char* hostname, char* serv, void* ctxt, FreeNameInfoCallBack freenameinfo_cb, Boolean should_lock);
 static void _GetNameInfoCallBackWithFree(int eai_status, char* hostname, char* serv, void* ctxt, FreeNameInfoCallBack freenameinfo_cb);
@@ -230,29 +231,28 @@ static UInt8* _CFStringToCStringWithError(CFTypeRef thing, CFStreamError* error)
 
 static size_t _AddressSizeForSupportedFamily(int family);
 static void _HandleGetAddrInfoStatus(int eai_status, CFStreamError* error, Boolean intuitStatus);
-#if defined(__MACH__) || (HAVE_GETADDRINFO_A)
+
+#if defined(__MACH__) || defined(__linux__)
 static void _InitGetAddrInfoHints(CFHostInfoType info, struct addrinfo* hints);
 #endif
-
 
 #if defined(__linux__)
 
 #include <CoreFoundation/CFFileDescriptor.h>
+static CFFileDescriptorRef _CreateMasterAddressLookup_Linux(CFStringRef name, CFHostInfoType info, CFTypeRef context, CFStreamError* error);
 static CFFileDescriptorRef _CreateDNSLookup_Linux(CFTypeRef thing, CFHostInfoType type, void* context, CFStreamError* error);
 
-#if HAVE_GETADDRINFO_A
 static int _CreateAddressLookupRequest(const char* name, CFHostInfoType info, int signal, CFStreamError* error);
-static CFFileDescriptorRef _CreateAddressLookupSource_GetAddrInfo_A(int signal, CFTypeRef context, CFStreamError* error);
-static CFFileDescriptorRef _CreatePrimaryAddressLookup_Linux_GetAddrInfo_A(CFStringRef name, CFHostInfoType info, CFTypeRef context,
-                                                                           CFStreamError* error);
+static CFFileDescriptorRef _CreateAddressLookupSource_Linux(int signal, CFTypeRef context, CFStreamError* error);
+
+static void _MasterAddressLookupCallBack_Linux(CFFileDescriptorRef fdref, CFOptionFlags callBackTypes, void* info);
+
 static int _CreateSignalFd(int signal, CFStreamError* error);
-static void _PrimaryAddressLookupCallBack_Linux_GetAddrInfo_A(CFFileDescriptorRef fdref, CFOptionFlags callBackTypes, void* info);
 static int _SignalFdClearGetAddrInfoSignalWithHost(_CFHost* host);
 static int _SignalFdClearSignalWithError(int signal, sigset_t* set, CFStreamError* error);
 static int _SignalFdModifySignalWithError(int how, int signal, sigset_t* set, CFStreamError* error);
 static int _SignalFdSetSignalWithError(int signal, sigset_t* set, CFStreamError* error);
 static struct gaicb* _SignalFdGetAddrInfoResult(CFFileDescriptorRef fdref);
-#endif /* HAVE_GETADDRINFO_A */
 
 #endif /* __linux__ */
 
@@ -293,7 +293,8 @@ static CFMutableDictionaryRef _HostCache;   /* Cached hostname lookups (successe
 #pragma mark Static Function Definitions
 #endif
 
-/* static */ void _CFHostRegisterClass(void)
+/* static */
+void _CFHostRegisterClass(void)
 {
   static const CFRuntimeClass _kCFHostClass = {
       0,                                           // version
@@ -318,7 +319,8 @@ static CFMutableDictionaryRef _HostCache;   /* Cached hostname lookups (successe
   _HostCache = CFDictionaryCreateMutable(kCFAllocatorDefault, 0, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
 }
 
-/* static */ _CFHost* _HostCreate(CFAllocatorRef allocator)
+/* static */
+_CFHost* _HostCreate(CFAllocatorRef allocator)
 {
   CFDictionaryKeyCallBacks keys = {0, NULL, NULL, NULL, NULL, NULL};
 
@@ -355,7 +357,8 @@ static CFMutableDictionaryRef _HostCache;   /* Cached hostname lookups (successe
   return host;
 }
 
-/* static */ void _HostDestroy(_CFHost* host)
+/* static */
+void _HostDestroy(_CFHost* host)
 {
   // Prevent anything else from taking hold
   __CFSpinLock(&host->_lock);
@@ -378,7 +381,8 @@ static CFMutableDictionaryRef _HostCache;   /* Cached hostname lookups (successe
     CFRelease(host->_schedules);
 }
 
-/* static */ CFStringRef _HostDescribe(_CFHost* host)
+/* static */
+CFStringRef _HostDescribe(_CFHost* host)
 {
   CFStringRef result;
 
@@ -391,7 +395,8 @@ static CFMutableDictionaryRef _HostCache;   /* Cached hostname lookups (successe
   return result;
 }
 
-/* static */ void _HostCancel(_CFHost* host)
+/* static */
+void _HostCancel(_CFHost* host)
 {
   CFHostClientCallBack cb = NULL;
   CFStreamError error;
@@ -431,7 +436,8 @@ static CFMutableDictionaryRef _HostCache;   /* Cached hostname lookups (successe
   CFRelease((CFHostRef)host);
 }
 
-/* static */ Boolean _HostBlockUntilComplete(_CFHost* host)
+/* static */
+Boolean _HostBlockUntilComplete(_CFHost* host)
 {
   // Assume success by default
   Boolean result = TRUE;
@@ -461,7 +467,7 @@ static CFMutableDictionaryRef _HostCache;   /* Cached hostname lookups (successe
     result = FALSE;
 
   // Unlock the host again.
-  __CFSpinLock(&host->_lock);
+  __CFSpinUnlock(&host->_lock);
 
   // Unschedule from the blocking mode
   CFHostUnscheduleFromRunLoop((CFHostRef)host, rl, _kCFHostBlockingMode);
@@ -469,7 +475,8 @@ static CFMutableDictionaryRef _HostCache;   /* Cached hostname lookups (successe
   return result;
 }
 
-/* static */ void _HostLookupCancel_NoLock(_CFHost* host)
+/* static */
+void _HostLookupCancel_NoLock(_CFHost* host)
 {
   __Require(host != NULL, done);
 
@@ -488,7 +495,8 @@ done:
   return;
 }
 
-/* static */ Boolean _CreateLookup_NoLock(_CFHost* host, CFHostInfoType info, Boolean* _Radar4012176)
+/* static */
+Boolean _CreateLookup_NoLock(_CFHost* host, CFHostInfoType info, Boolean* _Radar4012176)
 {
   Boolean result = FALSE;
 
@@ -692,7 +700,8 @@ done:
   return result;
 }
 
-/* static */ UInt8* _CFStringToCStringWithError(CFTypeRef thing, CFStreamError* error)
+/* static */
+UInt8* _CFStringToCStringWithError(CFTypeRef thing, CFStreamError* error)
 {
   const CFAllocatorRef allocator = CFGetAllocator(thing);
   const CFIndex length = CFStringGetLength((CFStringRef)thing);
@@ -743,7 +752,8 @@ done:
  *                             status based on 'errno'.
  *
  */
-/* static */ void _HandleGetAddrInfoStatus(int eai_status, CFStreamError* error, Boolean intuitStatus)
+/* static */
+void _HandleGetAddrInfoStatus(int eai_status, CFStreamError* error, Boolean intuitStatus)
 {
   if (eai_status != 0) {
     // If it's a system error, get the real error otherwise it's a
@@ -772,7 +782,7 @@ done:
   }
 }
 
-#if defined(__MACH__) || (HAVE_GETADDRINFO_A)
+#if defined(__MACH__) || defined(__linux__)
 /**
  *  @brief
  *    Establish the hint data passed to 'getaddrinfo*' and friends.
@@ -789,7 +799,8 @@ done:
  *                           the hint data.
  *
  */
-/* static */ void _InitGetAddrInfoHints(CFHostInfoType info, struct addrinfo* hints)
+/* static */
+void _InitGetAddrInfoHints(CFHostInfoType info, struct addrinfo* hints)
 {
 #ifdef AI_PARALLEL
   const int ai_flags = AI_ADDRCONFIG | AI_PARALLEL;
@@ -810,7 +821,7 @@ done:
   hints->ai_socktype = SOCK_STREAM;
   hints->ai_flags = ai_flags;
 }
-#endif /* defined(__MACH__) || (HAVE_GETADDRINFO_A) */
+#endif /* defined(__MACH__) || defined(__linux__) */
 
 /**
  *  @brief
@@ -853,23 +864,25 @@ done:
  *    success; otherwise, NULL.
  *
  */
-/* static */ CFTypeRef _CreateMasterAddressLookup(CFStringRef name, CFHostInfoType info, CFTypeRef context, CFStreamError* error)
+/* static */
+CFTypeRef _CreateMasterAddressLookup(CFStringRef name, CFHostInfoType info, CFTypeRef context, CFStreamError* error)
 {
   CFTypeRef result = NULL;
 
 #if defined(__MACH__)
   result = _CreatePrimaryAddressLookup_Mach(name, info, context, error);
-#elif HAVE_GETADDRINFO_A
-  result = _CreatePrimaryAddressLookup_Linux_GetAddrInfo_A(name, info, context, error);
+#elif defined(__linux__)
+  result = _CreateMasterAddressLookup_Linux(name, info, context, error);
 #else
 #error "No Linux primary getaddrinfo/gethostbyname DNS lookup implementation!"
-#endif /* __MACH__ || HAVE_GETADDRINFO_A */
+#endif /* __MACH__ || __linux__ */
 
   return result;
 }
 
 #if defined(__MACH__)
-/* static */ CFMachPortRef _CreatePrimaryAddressLookup_Mach(CFStringRef name, CFHostInfoType info, CFTypeRef context, CFStreamError* error)
+/* static */
+CFMachPortRef _CreatePrimaryAddressLookup_Mach(CFStringRef name, CFHostInfoType info, CFTypeRef context, CFStreamError* error)
 {
   const CFAllocatorRef allocator = CFGetAllocator(name);
   UInt8* buffer;
@@ -905,8 +918,9 @@ done:
 }
 #endif /* defined(__MACH__) */
 
-#if defined(__linux__) && (HAVE_GETADDRINFO_A)
-/* static */ int _SignalFdModifySignalWithError(int how, int signal, sigset_t* set, CFStreamError* error)
+#if defined(__linux__)
+/* static */
+int _SignalFdModifySignalWithError(int how, int signal, sigset_t* set, CFStreamError* error)
 {
   int result;
 
@@ -924,17 +938,20 @@ done:
   return result;
 }
 
-/* static */ int _SignalFdSetSignalWithError(int signal, sigset_t* set, CFStreamError* error)
+/* static */
+int _SignalFdSetSignalWithError(int signal, sigset_t* set, CFStreamError* error)
 {
   return (_SignalFdModifySignalWithError(SIG_BLOCK, signal, set, error));
 }
 
-/* static */ int _SignalFdClearSignalWithError(int signal, sigset_t* set, CFStreamError* error)
+/* static */
+int _SignalFdClearSignalWithError(int signal, sigset_t* set, CFStreamError* error)
 {
   return (_SignalFdModifySignalWithError(SIG_UNBLOCK, signal, set, error));
 }
 
-/* static */ int _SignalFdClearGetAddrInfoSignalWithHost(_CFHost* host)
+/* static */
+int _SignalFdClearGetAddrInfoSignalWithHost(_CFHost* host)
 {
   const int signal = __kCFHostLinuxSignalFdSignal;
   sigset_t sigset;
@@ -949,7 +966,8 @@ done:
   return result;
 }
 
-/* static */ int _CreateSignalFd(int signal, CFStreamError* error)
+/* static */
+int _CreateSignalFd(int signal, CFStreamError* error)
 {
   const int kInvalidExistingDescriptor = -1;
   const int flags = 0;
@@ -1007,7 +1025,8 @@ done:
   return result;
 }
 
-/* static */ struct gaicb* _SignalFdGetAddrInfoResult(CFFileDescriptorRef fdref)
+/* static */
+struct gaicb* _SignalFdGetAddrInfoResult(CFFileDescriptorRef fdref)
 {
   CFFileDescriptorNativeDescriptor fd;
   struct signalfd_siginfo fdsi;
@@ -1033,7 +1052,8 @@ done:
   return result;
 }
 
-/* static */ void _PrimaryAddressLookupCallBack_Linux_GetAddrInfo_A(CFFileDescriptorRef fdref, CFOptionFlags callBackTypes, void* info)
+/* static */
+void _MasterAddressLookupCallBack_Linux(CFFileDescriptorRef fdref, CFOptionFlags callBackTypes, void* info)
 {
   int status;
   struct gaicb* request = NULL;
@@ -1064,7 +1084,8 @@ done:
   CFRelease(fdref);
 }
 
-/* static */ CFFileDescriptorRef _CreateAddressLookupSource_GetAddrInfo_A(int signal, CFTypeRef context, CFStreamError* error)
+/* static */
+CFFileDescriptorRef _CreateAddressLookupSource_Linux(int signal, CFTypeRef context, CFStreamError* error)
 {
   const Boolean kCloseOnInvalidate = TRUE;
   int sigfd;
@@ -1074,7 +1095,7 @@ done:
   sigfd = _CreateSignalFd(signal, error);
   __Require(sigfd != -1, done);
 
-  result = CFFileDescriptorCreate(kCFAllocatorDefault, sigfd, kCloseOnInvalidate, _PrimaryAddressLookupCallBack_Linux_GetAddrInfo_A, &fdrefContext);
+  result = CFFileDescriptorCreate(kCFAllocatorDefault, sigfd, kCloseOnInvalidate, _MasterAddressLookupCallBack_Linux, &fdrefContext);
   if (!result) {
     error->error = ENOMEM;
     error->domain = kCFStreamErrorDomainPOSIX;
@@ -1093,7 +1114,8 @@ done:
   return result;
 }
 
-/* static */ CFFileDescriptorRef _CreatePrimaryAddressLookup_Linux_GetAddrInfo_A(CFStringRef name, CFHostInfoType info, CFTypeRef context,
+/* static */
+CFFileDescriptorRef _CreateMasterAddressLookup_Linux(CFStringRef name, CFHostInfoType info, CFTypeRef context,
                                                                                  CFStreamError* error)
 {
   const CFAllocatorRef allocator = CFGetAllocator(name);
@@ -1112,7 +1134,7 @@ done:
   // Create the CFFileDescriptor-based lookup source that will
   // handle the I/O for the asynchronous getaddrinfo_a call.
 
-  result = _CreateAddressLookupSource_GetAddrInfo_A(signal, context, error);
+  result = _CreateAddressLookupSource_Linux(signal, context, error);
   __Require_Action(result != NULL, done, CFAllocatorDeallocate(allocator, buffer));
 
   status = _CreateAddressLookupRequest((const char*)buffer, info, signal, error);
@@ -1130,9 +1152,10 @@ done:
 
   return result;
 }
-#endif /* __linux__ && HAVE_GETADDRINFO_A */
+#endif /* __linux__ */
 
-/* static */ CFTypeRef _CreateAddressLookup(CFStringRef name, CFHostInfoType info, void* context, CFStreamError* error)
+/* static */
+CFTypeRef _CreateAddressLookup(CFStringRef name, CFHostInfoType info, void* context, CFStreamError* error)
 {
   Boolean started = FALSE;
   CFTypeRef result = NULL;
@@ -1195,12 +1218,10 @@ done:
           /* The list holds it now. */
           CFRelease(host);
 
-          // Kick off an internal, asynchronous resolution
-          // that will nest with the external resolution. It
-          // is definitionally asynchronous because a
-          // internal asynchronous client callback is set,
-          // which may not be the case with the outer
-          // resolution that triggered this one.
+          // Kick off an internal, asynchronous resolution that will nest with the external
+          // resolution. It is definitionally asynchronous because a internal asynchronous
+          // client callback is set, which may not be the case with the outer resolution
+          // that triggered this one.
 
           // Set the asynchronous client callback.
 
@@ -1211,20 +1232,15 @@ done:
 
           started = CFHostStartInfoResolution(host, _kCFHostMasterAddressLookup, error);
           if (!started) {
-            // It is absolutely imperative that
-            // CFHostStartInfoResolution (or its
-            // info-type-specific helpers) set an error of
-            // some sort if it (they) failed. In response
-            // to failure, the name/list key/value pair
-            // will be removed from _HostLookups and,
-            // along with them, the host will then be
-            // invalid and go out of scope.
+            // It is absolutely imperative that CFHostStartInfoResolution (or its
+            // info-type-specific helpers) set an error of some sort if it (they) failed.
+            // In response to failure, the name/list key/value pair will be removed from
+            // _HostLookups and, along with them, the host will then be invalid and go out
+            // of scope.
             //
-            // If processing continues on the false
-            // assumption that there were no errors,
-            // execution flow will fault when the newly
-            // created run loop source below is added to a
-            // list that is no longer valid.
+            // If processing continues on the false assumption that there were no errors,
+            // execution flow will fault when the newly created run loop source below is
+            // added to a list that is no longer valid.
 
             // CFAssert2(error->error != 0, __kCFLogAssertion, ""resolution failed but error is not set");
 
@@ -1233,11 +1249,9 @@ done:
             /* If it failed, don't keep it in the outstanding lookups list. */
             CFDictionaryRemoveValue(_HostLookups, name);
 
-            // Name, host, and list are no longer valid
-            // and in scope at this point. A stream error
-            // MUST be set, per the comment above or any
-            // manipulation of name, list, or host
-            // hereafter will fault.
+            // Name, host, and list are no longer valid and in scope at this point. A stream
+            // error MUST be set, per the comment above or any manipulation of name, list, or
+            // host hereafter will fault.
           }
         }
       }
@@ -1286,7 +1300,8 @@ done:
   return result;
 }
 
-/* static */ CFTypeRef _CreateNameLookup(CFDataRef address, void* context, CFStreamError* error)
+/* static */
+CFTypeRef _CreateNameLookup(CFDataRef address, void* context, CFStreamError* error)
 {
   CFTypeRef result = NULL;
 
@@ -1300,7 +1315,8 @@ done:
 }
 
 #if defined(__MACH__)
-/* static */ CFMachPortRef _CreateNameLookup_Mach(CFDataRef address, void* context, CFStreamError* error)
+/* static */
+CFMachPortRef _CreateNameLookup_Mach(CFDataRef address, void* context, CFStreamError* error)
 {
   mach_port_t prt = MACH_PORT_NULL;
   CFMachPortRef result = NULL;
@@ -1322,7 +1338,8 @@ done:
 #endif /* __MACH__ */
 
 #if defined(__MACH__)
-/* static */ SCNetworkReachabilityRef _CreateReachabilityLookup(CFTypeRef thing, void* context, CFStreamError* error)
+/* static */
+SCNetworkReachabilityRef _CreateReachabilityLookup(CFTypeRef thing, void* context, CFStreamError* error)
 {
   SCNetworkReachabilityRef result = NULL;
 
@@ -1374,7 +1391,8 @@ done:
 }
 #endif /* __MACH__ */
 
-/* static */ CFTypeRef _CreateDNSLookup(CFTypeRef thing, CFHostInfoType info, void* context, CFStreamError* error)
+/* static */
+CFTypeRef _CreateDNSLookup(CFTypeRef thing, CFHostInfoType info, void* context, CFStreamError* error)
 {
   CFTypeRef result = NULL;
 
@@ -1383,14 +1401,15 @@ done:
 #elif defined(__linux__)
   result = _CreateDNSLookup_Linux(thing, info, context, error);
 #else
-#warning "Platform portability issue!"
+#warning "_CreateDNSLookup() doesn't support this platform!"
 #endif
 
   return result;
 }
 
 #if defined(__MACH__)
-/* static */ CFMachPortRef _CreateDNSLookup_Mach(CFTypeRef thing, CFHostInfoType info, void* context, CFStreamError* error)
+/* static */
+CFMachPortRef _CreateDNSLookup_Mach(CFTypeRef thing, CFHostInfoType info, void* context, CFStreamError* error)
 {
   const CFAllocatorRef allocator = CFGetAllocator(thing);
   UInt8* buffer;
@@ -1423,7 +1442,8 @@ done:
 #endif /* defined(__MACH__) */
 
 #if defined(__linux__)
-/* static */ CFFileDescriptorRef _CreateDNSLookup_Linux(CFTypeRef thing, CFHostInfoType info, void* context, CFStreamError* error)
+/* static */
+CFFileDescriptorRef _CreateDNSLookup_Linux(CFTypeRef thing, CFHostInfoType info, void* context, CFStreamError* error)
 {
   CFFileDescriptorRef result = NULL;
 
@@ -1440,7 +1460,8 @@ done:
 }
 #endif /* defined(__linux__) */
 
-/* static */ size_t _AddressSizeForSupportedFamily(int family)
+/* static */
+size_t _AddressSizeForSupportedFamily(int family)
 {
   size_t result;
 
@@ -1461,7 +1482,8 @@ done:
   return result;
 }
 
-/* static */ void _GetAddrInfoCallBackWithFree(int eai_status, const struct addrinfo* res, void* ctxt, FreeAddrInfoCallBack freeaddrinfo_cb)
+/* static */
+void _GetAddrInfoCallBackWithFree(int eai_status, const struct addrinfo* res, void* ctxt, FreeAddrInfoCallBack freeaddrinfo_cb)
 {
   _CFHost* host = (_CFHost*)ctxt;
   CFHostClientCallBack cb = NULL;
@@ -1586,18 +1608,20 @@ done:
   CFRelease((CFHostRef)host);
 }
 
-#if defined(__MACH__) || (HAVE_GETADDRINFO_A)
-/* static */ void _GetAddrInfoCallBack(int eai_status, const struct addrinfo* res, void* ctxt)
+#if defined(__MACH__) || defined(__linux__)
+/* static */
+void _GetAddrInfoCallBack(int eai_status, const struct addrinfo* res, void* ctxt)
 {
   _GetAddrInfoCallBackWithFree(eai_status, res, ctxt, freeaddrinfo);
 }
-#endif /* defined(__MACH__) || (HAVE_GETADDRINFO_A) */
+#endif /* defined(__MACH__) || defined(__linux__) */
 
 #if defined(__MACH__)
 /* static */ void _GetAddrInfoMachPortCallBack(CFMachPortRef port, void* msg, CFIndex size, void* info) { getaddrinfo_async_handle_reply(msg); }
 #endif /* defined(__MACH__) */
 
-/* static */ void _GetNameInfoCallBackWithFree_NoLock(int eai_status, char* hostname, char* serv, _CFHost* host, CFHostClientCallBack* cb,
+/* static */
+void _GetNameInfoCallBackWithFree_NoLock(int eai_status, char* hostname, char* serv, _CFHost* host, CFHostClientCallBack* cb,
                                                       void** info, CFStreamError* error)
 {
   __Require(hostname != NULL, done);
@@ -1666,7 +1690,8 @@ done:
   return;
 }
 
-/* static */ void _GetNameInfoCallBackWithFreeAndWithShouldLock(int eai_status, char* hostname, char* serv, void* ctxt,
+/* static */
+void _GetNameInfoCallBackWithFreeAndWithShouldLock(int eai_status, char* hostname, char* serv, void* ctxt,
                                                                 FreeNameInfoCallBack freenameinfo_cb, Boolean should_lock)
 {
   _CFHost* host = (_CFHost*)ctxt;
@@ -1722,7 +1747,8 @@ done:
   CFRelease((CFHostRef)host);
 }
 
-/* static */ void _GetNameInfoCallBackWithFree(int eai_status, char* hostname, char* serv, void* ctxt, FreeNameInfoCallBack freenameinfo_cb)
+/* static */
+void _GetNameInfoCallBackWithFree(int eai_status, char* hostname, char* serv, void* ctxt, FreeNameInfoCallBack freenameinfo_cb)
 {
   static const Boolean should_lock = TRUE;
 
@@ -1730,7 +1756,8 @@ done:
 }
 
 #if defined(__MACH__)
-/* static */ void _FreeNameInfoCallBack_Mach(char* hostname, char* serv)
+/* static */
+void _FreeNameInfoCallBack_Mach(char* hostname, char* serv)
 {
   if (hostname)
     free(hostname);
@@ -1738,7 +1765,8 @@ done:
     free(serv);
 }
 
-/* static */ void _GetNameInfoCallBack(int eai_status, char* hostname, char* serv, void* ctxt)
+/* static */
+void _GetNameInfoCallBack(int eai_status, char* hostname, char* serv, void* ctxt)
 {
   static const Boolean should_lock = TRUE;
   FreeNameInfoCallBack free_cb = _FreeNameInfoCallBack_Mach;
@@ -1746,9 +1774,14 @@ done:
   _GetNameInfoCallBackWithFreeAndWithShouldLock(eai_status, hostname, serv, ctxt, free_cb, should_lock);
 }
 
-/* static */ void _GetNameInfoMachPortCallBack(CFMachPortRef port, void* msg, CFIndex size, void* info) { getnameinfo_async_handle_reply(msg); }
+/* static */
+void _GetNameInfoMachPortCallBack(CFMachPortRef port, void* msg, CFIndex size, void* info)
+{
+  getnameinfo_async_handle_reply(msg);
+}
 
-/* static */ void _NetworkReachabilityCallBack(SCNetworkReachabilityRef target, SCNetworkConnectionFlags flags, void* ctxt)
+/* static */
+void _NetworkReachabilityCallBack(SCNetworkReachabilityRef target, SCNetworkConnectionFlags flags, void* ctxt)
 {
   _CFHost* host = (_CFHost*)ctxt;
   CFHostClientCallBack cb = NULL;
@@ -1807,7 +1840,8 @@ done:
 #endif /* #if defined(__MACH__) */
 
 #if defined(__MACH__)
-/* static */ void _NetworkReachabilityByIPCallBack(_CFHost* host)
+/* static */
+void _NetworkReachabilityByIPCallBack(_CFHost* host)
 {
   CFHostClientCallBack cb = NULL;
   CFStreamError error;
@@ -1847,7 +1881,8 @@ done:
 #endif /* defined(__MACH__) */
 
 #if defined(__MACH__)
-/* static */ void _DNSCallBack_Mach(int32_t status, char* buf, uint32_t len, struct sockaddr* from, int fromlen, void* context)
+/* static */
+void _DNSCallBack_Mach(int32_t status, char* buf, uint32_t len, struct sockaddr* from, int fromlen, void* context)
 {
   _CFHost* host = (_CFHost*)context;
   CFHostClientCallBack cb = NULL;
@@ -1941,10 +1976,12 @@ done:
   CFRelease((CFHostRef)context);
 }
 
-/* static */ void _DNSMachPortCallBack(CFMachPortRef port, void* msg, CFIndex size, void* info) { dns_async_handle_reply(msg); }
+/* static */
+void _DNSMachPortCallBack(CFMachPortRef port, void* msg, CFIndex size, void* info) { dns_async_handle_reply(msg); }
 #endif /* #if defined(__MACH__) */
 
-/* static */ void _MasterLookupCallBack(CFHostRef theHost, CFHostInfoType typeInfo, const CFStreamError* error, CFStringRef name)
+/* static */
+void _MasterLookupCallBack(CFHostRef theHost, CFHostInfoType typeInfo, const CFStreamError* error, CFStringRef name)
 {
   CFArrayRef list;
 
@@ -2080,7 +2117,8 @@ done:
   }
 }
 
-/* static */ void _AddressLookupSchedule_NoLock(_CFHost* host, CFRunLoopRef rl, CFStringRef mode)
+/* static */
+void _AddressLookupSchedule_NoLock(_CFHost* host, CFRunLoopRef rl, CFStringRef mode)
 {
   CFArrayRef list;
   CFArrayRef names = (CFArrayRef)CFDictionaryGetValue(host->_info, (const void*)kCFHostNames);
@@ -2098,7 +2136,8 @@ done:
   _CFMutexUnlock(_HostLock);
 }
 
-/* static */ void _AddressLookupPerform(_CFHost* host)
+/* static */
+void _AddressLookupPerform(_CFHost* host)
 {
   CFHostClientCallBack cb = NULL;
   CFStreamError error;
@@ -2131,7 +2170,8 @@ done:
   CFRelease((CFHostRef)host);
 }
 
-/* static */ void _ExpireCacheEntries(void)
+/* static */
+void _ExpireCacheEntries(void)
 {
   CFIndex count;
 
@@ -2200,7 +2240,8 @@ done:
   _CFMutexUnlock(_HostLock);
 }
 
-/* static */ CFArrayRef _CFArrayCreateDeepCopy(CFAllocatorRef alloc, CFArrayRef array)
+/* static */
+CFArrayRef _CFArrayCreateDeepCopy(CFAllocatorRef alloc, CFArrayRef array)
 {
   CFArrayRef result = NULL;
   CFIndex i, c = CFArrayGetCount(array);
@@ -2243,7 +2284,8 @@ done:
 }
 
 #if defined(__MACH__)
-/* static */ Boolean _IsDottedIp(CFStringRef name)
+/* static */
+Boolean _IsDottedIp(CFStringRef name)
 {
   Boolean result = FALSE;
   UInt8 stack_buffer[1024];
@@ -2282,14 +2324,16 @@ done:
 #pragma mark Extern Function Definitions (API)
 #endif
 
-/* extern */ CFTypeID CFHostGetTypeID(void)
+/* extern */
+CFTypeID CFHostGetTypeID(void)
 {
   _CFDoOnce(&_kCFHostRegisterClass, _CFHostRegisterClass);
 
   return _kCFHostTypeID;
 }
 
-/* extern */ CFHostRef CFHostCreateWithName(CFAllocatorRef allocator, CFStringRef hostname)
+/* extern */
+CFHostRef CFHostCreateWithName(CFAllocatorRef allocator, CFStringRef hostname)
 {
   // Create the base object
   _CFHost* result = _HostCreate(allocator);
@@ -2315,7 +2359,8 @@ done:
   return (CFHostRef)result;
 }
 
-/* extern */ CFHostRef CFHostCreateWithAddress(CFAllocatorRef allocator, CFDataRef addr)
+/* extern */
+CFHostRef CFHostCreateWithAddress(CFAllocatorRef allocator, CFDataRef addr)
 {
   // Create the base object
   _CFHost* result = _HostCreate(allocator);
@@ -2341,7 +2386,8 @@ done:
   return (CFHostRef)result;
 }
 
-/* extern */ CFHostRef CFHostCreateCopy(CFAllocatorRef allocator, CFHostRef h)
+/* extern */
+CFHostRef CFHostCreateCopy(CFAllocatorRef allocator, CFHostRef h)
 {
   _CFHost* host = (_CFHost*)h;
 
@@ -2408,7 +2454,8 @@ done:
  *    error occurred.
  *
  */
-/* extern */ Boolean CFHostStartInfoResolution(CFHostRef theHost, CFHostInfoType info, CFStreamError* error)
+/* extern */
+Boolean CFHostStartInfoResolution(CFHostRef theHost, CFHostInfoType info, CFStreamError* error)
 {
   _CFHost* host = (_CFHost*)theHost;
   CFStreamError extra;
@@ -2481,7 +2528,8 @@ done:
   return result;
 }
 
-/* extern */ CFTypeRef CFHostGetInfo(CFHostRef theHost, CFHostInfoType info, Boolean* hasBeenResolved)
+/* extern */
+CFTypeRef CFHostGetInfo(CFHostRef theHost, CFHostInfoType info, Boolean* hasBeenResolved)
 {
   _CFHost* host = (_CFHost*)theHost;
   Boolean extra;
@@ -2516,24 +2564,28 @@ done:
   return result;
 }
 
-/* extern */ CFArrayRef CFHostGetAddressing(CFHostRef theHost, Boolean* hasBeenResolved)
+/* extern */
+CFArrayRef CFHostGetAddressing(CFHostRef theHost, Boolean* hasBeenResolved)
 {
   return (CFArrayRef)CFHostGetInfo(theHost, kCFHostAddresses, hasBeenResolved);
 }
 
-/* extern */ CFArrayRef CFHostGetNames(CFHostRef theHost, Boolean* hasBeenResolved)
+/* extern */
+CFArrayRef CFHostGetNames(CFHostRef theHost, Boolean* hasBeenResolved)
 {
   return (CFArrayRef)CFHostGetInfo(theHost, kCFHostNames, hasBeenResolved);
 }
 
 #if defined(__MACH__)
-/* extern */ CFDataRef CFHostGetReachability(CFHostRef theHost, Boolean* hasBeenResolved)
+/* extern */
+CFDataRef CFHostGetReachability(CFHostRef theHost, Boolean* hasBeenResolved)
 {
   return (CFDataRef)CFHostGetInfo(theHost, kCFHostReachability, hasBeenResolved);
 }
 #endif
 
-/* extern */ void CFHostCancelInfoResolution(CFHostRef theHost, CFHostInfoType info)
+/* extern */
+void CFHostCancelInfoResolution(CFHostRef theHost, CFHostInfoType info)
 {
   _CFHost* host = (_CFHost*)theHost;
 
@@ -2644,7 +2696,8 @@ done:
   __CFSpinUnlock(&host->_lock);
 }
 
-/* extern */ Boolean CFHostSetClient(CFHostRef theHost, CFHostClientCallBack clientCB, CFHostClientContext* clientContext)
+/* extern */
+Boolean CFHostSetClient(CFHostRef theHost, CFHostClientCallBack clientCB, CFHostClientContext* clientContext)
 {
   _CFHost* host = (_CFHost*)theHost;
 
@@ -2740,7 +2793,8 @@ done:
   return TRUE;
 }
 
-/* extern */ void CFHostScheduleWithRunLoop(CFHostRef theHost, CFRunLoopRef runLoop, CFStringRef runLoopMode)
+/* extern */
+void CFHostScheduleWithRunLoop(CFHostRef theHost, CFRunLoopRef runLoop, CFStringRef runLoopMode)
 {
   _CFHost* host = (_CFHost*)theHost;
 
@@ -2761,7 +2815,8 @@ done:
   ;
 }
 
-/* extern */ void CFHostUnscheduleFromRunLoop(CFHostRef theHost, CFRunLoopRef runLoop, CFStringRef runLoopMode)
+/* extern */
+void CFHostUnscheduleFromRunLoop(CFHostRef theHost, CFRunLoopRef runLoop, CFStringRef runLoopMode)
 {
   _CFHost* host = (_CFHost*)theHost;
 
