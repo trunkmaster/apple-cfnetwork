@@ -2,8 +2,22 @@ BasedOnStyle: Google
 AllowShortIfStatementsOnASingleLine: Never
 AllowShortLoopsOnASingleLine: false
 AllowAllParametersOfDeclarationOnNextLine: false
+BinPackParameters: false
+AlwaysBreakAfterReturnType: All
+AllowAllArgumentsOnNextLine: false
 AllowAllConstructorInitializersOnNextLine: false
 AlwaysBreakBeforeMultilineStrings: false
+AlignConsecutiveDeclarations: true
+AlignConsecutiveMacros: None
+AlignAfterOpenBracket: Align
+AlignConsecutiveAssignments:
+  Enabled: true
+  AcrossEmptyLines: true
+  AcrossComments: true
+AlignConsecutiveBitFields: AcrossEmptyLinesAndComments
+AlignTrailingComments: true
+AlignEscapedNewlines: Left
+AlignOperands: Align
 BreakBeforeBraces: Custom
 BraceWrapping:
   AfterCaseLabel: false
@@ -20,12 +34,9 @@ BraceWrapping:
   IndentBraces: false
 ObjCSpaceAfterProperty: true
 ObjCSpaceBeforeProtocolList: true
-AllowAllArgumentsOnNextLine: false
 PointerAlignment: Right
+DerivePointerAlignment: true
 ColumnLimit: 150
 SortIncludes: Never
-PointerAlignment: Right
-AlignConsecutiveBitFields: AcrossEmptyLinesAndComments
-AlignTrailingComments: true
-AlignEscapedNewlines: Left
-AlignOperands: Align
+IndentPPDirectives: BeforeHash
+TypenameMacros: ['CONST_STRING_DECL']
