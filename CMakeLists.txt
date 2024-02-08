@@ -68,6 +68,7 @@ add_framework(CFNetwork
                 # Proxies
                 Proxies/ProxySupport.h
               PUBLIC_HEADERS
+                AvailabilityMacros.h
                 CFNetwork.h
                 CFNetworkDefs.h
                 # FTP

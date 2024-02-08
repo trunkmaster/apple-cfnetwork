@@ -25,7 +25,7 @@
  
      Contains:   CoreFoundation Network HTTP authentication header
  
-     Copyright:  © 2001-2005 by Apple Computer, Inc., all rights reserved
+     Copyright:  ï¿½ 2001-2005 by Apple Computer, Inc., all rights reserved
  
      Warning:    *** APPLE INTERNAL USE ONLY ***
                  This file may contain unreleased API's
@@ -61,7 +61,7 @@
 
 
 
-#include <AvailabilityMacros.h>
+#include <CFNetwork/AvailabilityMacros.h>
 
 #if PRAGMA_ONCE
 #pragma once

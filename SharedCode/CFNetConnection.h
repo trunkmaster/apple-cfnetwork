@@ -29,7 +29,7 @@
 #include <CFNetwork/CFSocketStream.h>
 #include <CoreFoundation/CFRuntime.h>
 #include <sys/types.h>
-#include <AvailabilityMacros.h>
+#include <CFNetwork/AvailabilityMacros.h>
 
 #ifdef __cplusplus
 extern "C" {

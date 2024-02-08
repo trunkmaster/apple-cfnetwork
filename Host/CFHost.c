@@ -259,6 +259,8 @@ static int           _SignalFdModifySignalWithError(int how, int signal, sigset_
 static int           _SignalFdSetSignalWithError(int signal, sigset_t* set, CFStreamError* error);
 static struct gaicb* _SignalFdGetAddrInfoResult(CFFileDescriptorRef fdref);
 
+static CFFileDescriptorRef _CreateNameLookup_Linux(CFDataRef address, void* context, CFStreamError* error);
+
 #endif /* __linux__ */
 
 #if defined(__MACH__)
@@ -1421,14 +1423,18 @@ CFTypeRef _CreateNameLookup(CFDataRef address, void* context, CFStreamError* err
 #if defined(__MACH__)
   result = _CreateNameLookup_Mach(address, context, error);
 #else
-  #warning "No Linux reverse DNS lookup implementation!"
+  result = _CreateNameLookup_Linux(address, context, error);
 #endif /* defined(__MACH__) */
 
   return result;
 }
 
 #if defined(__linux__)
-CFFileDescriptorRef _CreateNameLookup_Linux(CFDataRef address, void* context, CFStreamError* error) {}
+CFFileDescriptorRef _CreateNameLookup_Linux(CFDataRef address, void* context, CFStreamError* error)
+{
+  #warning "Linux reverse DNS lookup implementation is not complete!"
+  return NULL;
+}
 #endif
 
 #if defined(__MACH__)

@@ -54,7 +54,7 @@
   #include <CoreFoundation/CoreFoundation.h>
 #endif
 
-#include <AvailabilityMacros.h>
+#include <CFNetwork/AvailabilityMacros.h>
 
 #if PRAGMA_ONCE
   #pragma once
@@ -71,11 +71,6 @@ extern "C" {
 #if PRAGMA_ENUM_ALWAYSINT
   #pragma enumsalwaysint on
 #endif
-
-#define CALLBACK_API(_type, _name) _type(*_name)
-#define CALLBACK_API_C(_type, _name) _type(*_name)
-#define CALLBACK_API_STDCALL(_type, _name) _type(*_name)
-#define CALLBACK_API_C_STDCALL(_type, _name) _type(*_name)
 
 /*
  *  CFHostRef
