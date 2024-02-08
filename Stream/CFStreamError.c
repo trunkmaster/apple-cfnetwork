@@ -38,7 +38,7 @@
 #include <CoreFoundation/CFError.h>
 #include <CoreFoundation/CFStream.h>
 
-CF_EXPORT CFErrorRef _CFErrorCreateWithStreamError(CFAllocatorRef allocator, CFStreamError *error);
+CF_EXPORT CFErrorRef    _CFErrorCreateWithStreamError(CFAllocatorRef allocator, CFStreamError *error);
 CF_EXPORT CFStreamError _CFStreamErrorFromCFError(CFErrorRef error);
 
 /**
@@ -67,11 +67,11 @@ CFErrorRef _CFErrorCreateWithStreamError(CFAllocatorRef allocator, CFStreamError
   } else if (error->domain == kCFStreamErrorDomainMach) {
     result = CFErrorCreate(allocator, kCFErrorDomainMach, error->error, NULL);
   } else {
-    CFStringRef key = CFSTR("CFStreamErrorDomainKey");
-    CFNumberRef value = CFNumberCreate(allocator, kCFNumberCFIndexType, &error->domain);
-    CFDictionaryRef dict = CFDictionaryCreate(allocator, (const void **)(&key), (const void **)(&value), 1, &kCFTypeDictionaryKeyCallBacks,
-                                              &kCFTypeDictionaryValueCallBacks);
-    result = CFErrorCreate(allocator, CFSTR("BogusCFStreamErrorCompatibilityDomain"), error->error, dict);
+    CFStringRef     key   = CFSTR("CFStreamErrorDomainKey");
+    CFNumberRef     value = CFNumberCreate(allocator, kCFNumberCFIndexType, &error->domain);
+    CFDictionaryRef dict  = CFDictionaryCreate(allocator, (const void **)(&key), (const void **)(&value), 1, &kCFTypeDictionaryKeyCallBacks,
+                                               &kCFTypeDictionaryValueCallBacks);
+    result                = CFErrorCreate(allocator, CFSTR("BogusCFStreamErrorCompatibilityDomain"), error->error, dict);
     CFRelease(value);
     CFRelease(dict);
   }
@@ -91,7 +91,7 @@ CFErrorRef _CFErrorCreateWithStreamError(CFAllocatorRef allocator, CFStreamError
  */
 CFStreamError _CFStreamErrorFromCFError(CFErrorRef error)
 {
-  CFStringRef domain = CFErrorGetDomain(error);
+  CFStringRef   domain = CFErrorGetDomain(error);
   CFStreamError result;
 
   if (CFEqual(domain, kCFErrorDomainPOSIX)) {

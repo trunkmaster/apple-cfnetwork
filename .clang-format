@@ -3,7 +3,7 @@ AllowShortIfStatementsOnASingleLine: Never
 AllowShortLoopsOnASingleLine: false
 AllowAllParametersOfDeclarationOnNextLine: false
 BinPackParameters: false
-AlwaysBreakAfterReturnType: All
+AlwaysBreakAfterReturnType: None
 AllowAllArgumentsOnNextLine: false
 AllowAllConstructorInitializersOnNextLine: false
 AlwaysBreakBeforeMultilineStrings: false
@@ -39,4 +39,3 @@ DerivePointerAlignment: true
 ColumnLimit: 150
 SortIncludes: Never
 IndentPPDirectives: BeforeHash
-TypenameMacros: ['CONST_STRING_DECL']

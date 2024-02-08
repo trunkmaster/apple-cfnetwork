@@ -1,6 +1,6 @@
 CFN_CFLAGS="-F/usr/NextSpace/Frameworks -I/usr/NextSpace/include"
 CFN_LD_FLAGS="-L/usr/NextSpace/lib"
-cmake .. \
+cmake -B.build -S. \
         -DCMAKE_C_COMPILER=clang \
         -DCMAKE_CXX_COMPILER=clang++ \
         -DCFNETWORK_CFLAGS="${CFN_CFLAGS}" \

@@ -93,25 +93,25 @@
 
 #if defined(__MACH__)
 
-#include <SystemConfiguration/SystemConfiguration.h> /* for SCNetworkReachability and flags */
-#include <netdb_async.h>
+  #include <SystemConfiguration/SystemConfiguration.h> /* for SCNetworkReachability and flags */
+  #include <netdb_async.h>
 
 #else
 
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <poll.h>
-#include <signal.h>
-#include <sys/signalfd.h>
-#include <sys/syscall.h>
-#include <unistd.h>
+  #include <arpa/inet.h>
+  #include <netdb.h>
+  #include <poll.h>
+  #include <signal.h>
+  #include <sys/signalfd.h>
+  #include <sys/syscall.h>
+  #include <unistd.h>
 
 #endif /* __MACH__ */
 
 #pragma mark - ---- Declarations ----
 #pragma mark - Constants
 
-/* extern */ const SInt32 kCFStreamErrorDomainNetDB = 12;
+/* extern */ const SInt32 kCFStreamErrorDomainNetDB               = 12;
 /* extern */ const SInt32 kCFStreamErrorDomainSystemConfiguration = 13;
 
 #define _kCFNullHostInfoType ((CFHostInfoType)0xFFFFFFFF)
@@ -127,34 +127,34 @@
 #pragma mark - Constant Strings
 
 #ifdef __CONSTANT_CFSTRINGS__
-#define _kCFHostBlockingMode CFSTR("_kCFHostBlockingMode")
-#define _kCFHostDescribeFormat CFSTR("<CFHost 0x%x>{info=%@}")
+  #define _kCFHostBlockingMode CFSTR("_kCFHostBlockingMode")
+  #define _kCFHostDescribeFormat CFSTR("<CFHost 0x%x>{info=%@}")
 #else
 static CONST_STRING_DECL(_kCFHostBlockingMode, "_kCFHostBlockingMode") static CONST_STRING_DECL(_kCFHostDescribeFormat, "<CFHost 0x%x>{info=%@}")
 #endif /* __CONSTANT_CFSTRINGS__ */
 
 #if defined(__linux__)
-#define __kCFHostLinuxSignalFdSignal ((int)SIGRTMIN + 11)
+  #define __kCFHostLinuxSignalFdSignal ((int)SIGRTMIN + 11)
 #endif
 
 #pragma mark - CFHost struct
 
 typedef struct {
-  CFRuntimeBase          _base;
+  CFRuntimeBase _base;
 
-  CFSpinLock_t           _lock;
+  CFSpinLock_t _lock;
 
-  CFStreamError          _error;
+  CFStreamError _error;
 
   CFMutableDictionaryRef _info;
 
   // CFMutableDictionaryRef  _lookups;		// key = CFHostInfoType and value = CFTypeRef
-  CFTypeRef _lookup;
-  CFHostInfoType         _type;
+  CFTypeRef      _lookup;
+  CFHostInfoType _type;
 
-  CFMutableArrayRef      _schedules;  // List of loops and modes
-  CFHostClientCallBack   _callback;
-  CFHostClientContext    _client;
+  CFMutableArrayRef    _schedules;  // List of loops and modes
+  CFHostClientCallBack _callback;
+  CFHostClientContext  _client;
 } _CFHost;
 
 #if defined(__linux__)
@@ -174,9 +174,9 @@ typedef struct {
  *
  */
 typedef struct {
-  struct gaicb _request_gaicb;
+  struct gaicb    _request_gaicb;
   struct addrinfo _request_hints;
-  struct gaicb* _request_list[1];
+  struct gaicb*   _request_list[1];
 } _CFHostGAIARequest;
 #endif /* __linux__ */
 
@@ -189,14 +189,14 @@ typedef void (*FreeNameInfoCallBack)(char* node, char* service);
 
 #pragma mark - Static Functions
 
-static void _CFHostRegisterClass(void);
-static _CFHost* _HostCreate(CFAllocatorRef allocator);
-static void _HostDestroy(_CFHost* host);
+static void        _CFHostRegisterClass(void);
+static _CFHost*    _HostCreate(CFAllocatorRef allocator);
+static void        _HostDestroy(_CFHost* host);
 static CFStringRef _HostDescribe(_CFHost* host);
-static void _HostCancel(_CFHost* host);
+static void        _HostCancel(_CFHost* host);
 
 static Boolean _HostBlockUntilComplete(_CFHost* host);
-static void _HostLookupCancel_NoLock(_CFHost* host);
+static void    _HostLookupCancel_NoLock(_CFHost* host);
 
 static Boolean _CreateLookup_NoLock(_CFHost* host, CFHostInfoType info, Boolean* _Radar4012176);
 
@@ -210,9 +210,20 @@ static void _GetAddrInfoCallBack(int eai_status, const struct addrinfo* res, voi
 #endif
 
 static void _GetAddrInfoCallBackWithFree(int eai_status, const struct addrinfo* res, void* ctxt, FreeAddrInfoCallBack freeaddrinfo_cb);
-static void _GetNameInfoCallBackWithFreeAndWithShouldLock(int eai_status, char* hostname, char* serv, void* ctxt, FreeNameInfoCallBack freenameinfo_cb, Boolean should_lock);
+static void _GetNameInfoCallBackWithFreeAndWithShouldLock(int                  eai_status,
+                                                          char*                hostname,
+                                                          char*                serv,
+                                                          void*                ctxt,
+                                                          FreeNameInfoCallBack freenameinfo_cb,
+                                                          Boolean              should_lock);
 static void _GetNameInfoCallBackWithFree(int eai_status, char* hostname, char* serv, void* ctxt, FreeNameInfoCallBack freenameinfo_cb);
-static void _GetNameInfoCallBackWithFree_NoLock(int eai_status, char* hostname, char* serv, _CFHost* host, CFHostClientCallBack* cb, void** info, CFStreamError* error);
+static void _GetNameInfoCallBackWithFree_NoLock(int                   eai_status,
+                                                char*                 hostname,
+                                                char*                 serv,
+                                                _CFHost*              host,
+                                                CFHostClientCallBack* cb,
+                                                void**                info,
+                                                CFStreamError*        error);
 
 static void _MasterLookupCallBack(CFHostRef theHost, CFHostInfoType typeInfo, const CFStreamError* error, CFStringRef name);
 static void _AddressLookupPerform(_CFHost* host);
@@ -221,10 +232,10 @@ static void _AddressLookupSchedule_NoLock(_CFHost* host, CFRunLoopRef rl, CFStri
 static void _ExpireCacheEntries(void);
 
 static CFArrayRef _CFArrayCreateDeepCopy(CFAllocatorRef alloc, CFArrayRef array);
-static UInt8* _CFStringToCStringWithError(CFTypeRef thing, CFStreamError* error);
+static UInt8*     _CFStringToCStringWithError(CFTypeRef thing, CFStreamError* error);
 
 static size_t _AddressSizeForSupportedFamily(int family);
-static void _HandleGetAddrInfoStatus(int eai_status, CFStreamError* error, Boolean intuitStatus);
+static void   _HandleGetAddrInfoStatus(int eai_status, CFStreamError* error, Boolean intuitStatus);
 
 #if defined(__MACH__) || defined(__linux__)
 static void _InitGetAddrInfoHints(CFHostInfoType info, struct addrinfo* hints);
@@ -232,39 +243,39 @@ static void _InitGetAddrInfoHints(CFHostInfoType info, struct addrinfo* hints);
 
 #if defined(__linux__)
 
-#include <CoreFoundation/CFFileDescriptor.h>
+  #include <CoreFoundation/CFFileDescriptor.h>
 static CFFileDescriptorRef _CreateMasterAddressLookup_Linux(CFStringRef name, CFHostInfoType info, CFTypeRef context, CFStreamError* error);
 static CFFileDescriptorRef _CreateDNSLookup_Linux(CFTypeRef thing, CFHostInfoType type, void* context, CFStreamError* error);
 
-static int _CreateAddressLookupRequest(const char* name, CFHostInfoType info, int signal, CFStreamError* error);
+static int                 _CreateAddressLookupRequest(const char* name, CFHostInfoType info, int signal, CFStreamError* error);
 static CFFileDescriptorRef _CreateAddressLookupSource_Linux(int signal, CFTypeRef context, CFStreamError* error);
 
 static void _MasterAddressLookupCallBack_Linux(CFFileDescriptorRef fdref, CFOptionFlags callBackTypes, void* info);
 
-static int _CreateSignalFd(int signal, CFStreamError* error);
-static int _SignalFdClearGetAddrInfoSignalWithHost(_CFHost* host);
-static int _SignalFdClearSignalWithError(int signal, sigset_t* set, CFStreamError* error);
-static int _SignalFdModifySignalWithError(int how, int signal, sigset_t* set, CFStreamError* error);
-static int _SignalFdSetSignalWithError(int signal, sigset_t* set, CFStreamError* error);
+static int           _CreateSignalFd(int signal, CFStreamError* error);
+static int           _SignalFdClearGetAddrInfoSignalWithHost(_CFHost* host);
+static int           _SignalFdClearSignalWithError(int signal, sigset_t* set, CFStreamError* error);
+static int           _SignalFdModifySignalWithError(int how, int signal, sigset_t* set, CFStreamError* error);
+static int           _SignalFdSetSignalWithError(int signal, sigset_t* set, CFStreamError* error);
 static struct gaicb* _SignalFdGetAddrInfoResult(CFFileDescriptorRef fdref);
 
 #endif /* __linux__ */
 
-
 #if defined(__MACH__)
 
-static CFMachPortRef _CreateDNSLookup_Mach(CFTypeRef thing, CFHostInfoType type, void* context, CFStreamError* error);
-static CFMachPortRef _CreateMasterAddressLookup_Mach(CFStringRef name, CFHostInfoType info, CFTypeRef context, CFStreamError* error);
-static CFMachPortRef _CreateNameLookup_Mach(CFDataRef address, void* context, CFStreamError* error);
+static CFMachPortRef            _CreateDNSLookup_Mach(CFTypeRef thing, CFHostInfoType type, void* context, CFStreamError* error);
+static CFMachPortRef            _CreateMasterAddressLookup_Mach(CFStringRef name, CFHostInfoType info, CFTypeRef context, CFStreamError* error);
+static CFMachPortRef            _CreateNameLookup_Mach(CFDataRef address, void* context, CFStreamError* error);
 static SCNetworkReachabilityRef _CreateReachabilityLookup(CFTypeRef thing, void* context, CFStreamError* error);
-static void _DNSCallBack(int32_t status, char* buf, uint32_t len, struct sockaddr* from, int fromlen, void* context);
-static void _DNSMachPortCallBack(CFMachPortRef port, void* msg, CFIndex size, void* info);
-static void _GetAddrInfoMachPortCallBack(CFMachPortRef port, void* msg, CFIndex size, void* info);
-static void _GetNameInfoCallBack(int eai_status, char* hostname, char* serv, void* ctxt);
-static void _GetNameInfoMachPortCallBack(CFMachPortRef port, void* msg, CFIndex size, void* info);
+
+static void    _DNSCallBack(int32_t status, char* buf, uint32_t len, struct sockaddr* from, int fromlen, void* context);
+static void    _DNSMachPortCallBack(CFMachPortRef port, void* msg, CFIndex size, void* info);
+static void    _GetAddrInfoMachPortCallBack(CFMachPortRef port, void* msg, CFIndex size, void* info);
+static void    _GetNameInfoCallBack(int eai_status, char* hostname, char* serv, void* ctxt);
+static void    _GetNameInfoMachPortCallBack(CFMachPortRef port, void* msg, CFIndex size, void* info);
 static Boolean _IsDottedIp(CFStringRef name);
-static void _NetworkReachabilityByIPCallBack(_CFHost* host);
-static void _NetworkReachabilityCallBack(SCNetworkReachabilityRef target, SCNetworkConnectionFlags flags, void* ctxt);
+static void    _NetworkReachabilityByIPCallBack(_CFHost* host);
+static void    _NetworkReachabilityCallBack(SCNetworkReachabilityRef target, SCNetworkConnectionFlags flags, void* ctxt);
 typedef void (*FreeNameInfoCallBack)(char* hostname, char* serv);
 
 #endif /* defined(__MACH__) */
@@ -272,9 +283,9 @@ typedef void (*FreeNameInfoCallBack)(char* hostname, char* serv);
 #pragma mark - Globals
 
 static _CFOnceLock _kCFHostRegisterClass = _CFOnceInitializer;
-static CFTypeID _kCFHostTypeID = _kCFRuntimeNotATypeID;
+static CFTypeID    _kCFHostTypeID        = _kCFRuntimeNotATypeID;
 
-static _CFMutex* _HostLock;                 /* Lock used for cache and master list */
+static _CFMutex*              _HostLock;    /* Lock used for cache and master list */
 static CFMutableDictionaryRef _HostLookups; /* Active hostname lookups; for duplicate supression */
 static CFMutableDictionaryRef _HostCache;   /* Cached hostname lookups (successes only) */
 
@@ -299,12 +310,12 @@ void _CFHostRegisterClass(void)
   _kCFHostTypeID = _CFRuntimeRegisterClass(&_kCFHostClass);
 
   /* Set up the "master" for simultaneous, duplicate lookups. */
-  _HostLock = (_CFMutex*)CFAllocatorAllocate(kCFAllocatorDefault, sizeof(_HostLock[0]), 0);
+  _HostLock      = (_CFMutex*)CFAllocatorAllocate(kCFAllocatorDefault, sizeof(_HostLock[0]), 0);
   if (_HostLock) {
     _CFMutexInit(_HostLock, FALSE);
   }
   _HostLookups = CFDictionaryCreateMutable(kCFAllocatorDefault, 0, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
-  _HostCache = CFDictionaryCreateMutable(kCFAllocatorDefault, 0, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+  _HostCache   = CFDictionaryCreateMutable(kCFAllocatorDefault, 0, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
 }
 
 /* static */
@@ -312,7 +323,7 @@ _CFHost* _HostCreate(CFAllocatorRef allocator)
 {
   CFDictionaryKeyCallBacks keys = {0, NULL, NULL, NULL, NULL, NULL};
 
-  _CFHost* host = (_CFHost*)_CFRuntimeCreateInstance(allocator, CFHostGetTypeID(), sizeof(host[0]) - sizeof(CFRuntimeBase), NULL);
+  _CFHost* host                 = (_CFHost*)_CFRuntimeCreateInstance(allocator, CFHostGetTypeID(), sizeof(host[0]) - sizeof(CFRuntimeBase), NULL);
 
   if (host) {
     // Save a copy of the base so it's easier to zero the struct
@@ -324,13 +335,13 @@ _CFHost* _HostCreate(CFAllocatorRef allocator)
     // Put back the base
     memmove(&(host->_base), &copy, sizeof(host->_base));
 
-    host->_lock = 0;
+    host->_lock      = 0;
 
     // No lookup by default
-    host->_type = _kCFNullHostInfoType;
+    host->_type      = _kCFNullHostInfoType;
 
     // Create the dictionary of lookup information
-    host->_info = CFDictionaryCreateMutable(allocator, 0, &keys, &kCFTypeDictionaryValueCallBacks);
+    host->_info      = CFDictionaryCreateMutable(allocator, 0, &keys, &kCFTypeDictionaryValueCallBacks);
 
     // Create the list of loops and modes
     host->_schedules = CFArrayCreateMutable(allocator, 0, &kCFTypeArrayCallBacks);
@@ -387,9 +398,9 @@ CFStringRef _HostDescribe(_CFHost* host)
 void _HostCancel(_CFHost* host)
 {
   CFHostClientCallBack cb = NULL;
-  CFStreamError error;
-  void* info = NULL;
-  CFHostInfoType type = _kCFNullHostInfoType;
+  CFStreamError        error;
+  void*                info = NULL;
+  CFHostInfoType       type = _kCFNullHostInfoType;
 
   // Retain here to guarantee safety really after the lookups release,
   // but definitely before the callback.
@@ -401,7 +412,7 @@ void _HostCancel(_CFHost* host)
   // If the lookup canceled, don't need to do any of this.
   if (host->_lookup) {
     // Save the callback if there is one at this time.
-    cb = host->_callback;
+    cb   = host->_callback;
 
     // Save the type of lookup for the callback.
     type = host->_type;
@@ -428,8 +439,8 @@ void _HostCancel(_CFHost* host)
 Boolean _HostBlockUntilComplete(_CFHost* host)
 {
   // Assume success by default
-  Boolean result = TRUE;
-  CFRunLoopRef rl = CFRunLoopGetCurrent();
+  Boolean      result = TRUE;
+  CFRunLoopRef rl     = CFRunLoopGetCurrent();
 
   // Schedule in the blocking mode.
   CFHostScheduleWithRunLoop((CFHostRef)host, rl, _kCFHostBlockingMode);
@@ -477,7 +488,7 @@ void _HostLookupCancel_NoLock(_CFHost* host)
   // Release the lookup.
   CFRelease(host->_lookup);
   host->_lookup = NULL;
-  host->_type = _kCFNullHostInfoType;
+  host->_type   = _kCFNullHostInfoType;
 
 done:
   return;
@@ -486,7 +497,7 @@ done:
 /* static */
 Boolean _CreateLookup_NoLock(_CFHost* host, CFHostInfoType info, Boolean* _Radar4012176)
 {
-  Boolean result = FALSE;
+  Boolean result   = FALSE;
 
   // Get the existing names and addresses
   CFArrayRef names = (CFArrayRef)CFDictionaryGetValue(host->_info, (const void*)kCFHostNames);
@@ -494,9 +505,9 @@ Boolean _CreateLookup_NoLock(_CFHost* host, CFHostInfoType info, Boolean* _Radar
 
   // Grab the first of each if they exist in order to perform any of the lookups
   CFStringRef name = names && ((CFTypeRef)names != kCFNull) && CFArrayGetCount(names) ? (CFStringRef)CFArrayGetValueAtIndex(names, 0) : NULL;
-  CFDataRef addr = addrs && ((CFTypeRef)addrs != kCFNull) && CFArrayGetCount(addrs) ? (CFDataRef)CFArrayGetValueAtIndex(addrs, 0) : NULL;
+  CFDataRef   addr = addrs && ((CFTypeRef)addrs != kCFNull) && CFArrayGetCount(addrs) ? (CFDataRef)CFArrayGetValueAtIndex(addrs, 0) : NULL;
 
-  *_Radar4012176 = FALSE;
+  *_Radar4012176   = FALSE;
 
   // Only allow one lookup at a time
   if (host->_lookup) {
@@ -539,7 +550,7 @@ Boolean _CreateLookup_NoLock(_CFHost* host, CFHostInfoType info, Boolean* _Radar
                                          NULL, NULL, NULL,     NULL,      (void (*)(void*))_AddressLookupPerform};
 
           /* Create the lookup source.  This source will be signalled immediately. */
-          host->_lookup = CFRunLoopSourceCreate(alloc, 0, &ctxt);
+          host->_lookup               = CFRunLoopSourceCreate(alloc, 0, &ctxt);
 
           /* Upon success, add the data and signal the source. */
           if (host->_lookup && cp) {
@@ -547,7 +558,7 @@ Boolean _CreateLookup_NoLock(_CFHost* host, CFHostInfoType info, Boolean* _Radar
             CFRunLoopSourceSignal((CFRunLoopSourceRef)host->_lookup);
             *_Radar4012176 = TRUE;
           } else {
-            host->_error.error = ENOMEM;
+            host->_error.error  = ENOMEM;
             host->_error.domain = kCFStreamErrorDomainPOSIX;
           }
 
@@ -604,7 +615,7 @@ Boolean _CreateLookup_NoLock(_CFHost* host, CFHostInfoType info, Boolean* _Radar
         };
 
         SCNetworkConnectionFlags flags = 0;
-        CFAllocatorRef alloc = CFGetAllocator(host);
+        CFAllocatorRef           alloc = CFGetAllocator(host);
 
         /* Get the flags right away for dotted IP. */
         SCNetworkReachabilityGetFlags((SCNetworkReachabilityRef)(host->_lookup), &flags);
@@ -620,7 +631,7 @@ Boolean _CreateLookup_NoLock(_CFHost* host, CFHostInfoType info, Boolean* _Radar
         host->_lookup = CFRunLoopSourceCreate(alloc, 0, &ctxt);
 
         if (!host->_lookup) {
-          host->_error.error = ENOMEM;
+          host->_error.error  = ENOMEM;
           host->_error.domain = kCFStreamErrorDomainPOSIX;
         } else {
           // Create the data for hanging off the host info dictionary
@@ -633,9 +644,9 @@ Boolean _CreateLookup_NoLock(_CFHost* host, CFHostInfoType info, Boolean* _Radar
           if (!reachability) {
             /* Release and toss the lookup. */
             CFRelease(host->_lookup);
-            host->_lookup = NULL;
+            host->_lookup       = NULL;
 
-            host->_error.error = ENOMEM;
+            host->_error.error  = ENOMEM;
             host->_error.domain = kCFStreamErrorDomainPOSIX;
           } else {
             // Save the reachability information
@@ -650,7 +661,7 @@ Boolean _CreateLookup_NoLock(_CFHost* host, CFHostInfoType info, Boolean* _Radar
     }
 #else  /* not __MACH__ */
     {
-      host->_error.error = EOPNOTSUPP;
+      host->_error.error  = EOPNOTSUPP;
       host->_error.domain = kCFStreamErrorDomainPOSIX;
     }
 #endif /* __MACH__ */
@@ -673,7 +684,7 @@ Boolean _CreateLookup_NoLock(_CFHost* host, CFHostInfoType info, Boolean* _Radar
           host->_lookup = _CreateDNSLookup(name, info, host, &(host->_error));
           CFRelease(name);
         } else {
-          host->_error.error = ENOMEM;
+          host->_error.error  = ENOMEM;
           host->_error.domain = kCFStreamErrorDomainPOSIX;
         }
       }
@@ -682,7 +693,7 @@ Boolean _CreateLookup_NoLock(_CFHost* host, CFHostInfoType info, Boolean* _Radar
 
   if (host->_lookup) {
     host->_type = info;
-    result = TRUE;
+    result      = TRUE;
   }
 
   return result;
@@ -694,10 +705,10 @@ void _ExpireCacheEntries(void)
   CFIndex count;
 
   CFStringRef keys_buffer[_kCFHostCacheMaxEntries];
-  CFArrayRef values_buffer[_kCFHostCacheMaxEntries];
+  CFArrayRef  values_buffer[_kCFHostCacheMaxEntries];
 
-  CFStringRef* keys = &keys_buffer[0];
-  CFArrayRef* values = &values_buffer[0];
+  CFStringRef* keys   = &keys_buffer[0];
+  CFArrayRef*  values = &values_buffer[0];
 
   /* Lock the cache */
   _CFMutexLock(_HostLock);
@@ -708,17 +719,17 @@ void _ExpireCacheEntries(void)
 
     /* Allocate buffers for keys and values if don't have large enough static buffers. */
     if (count > _kCFHostCacheMaxEntries) {
-      keys = (CFStringRef*)CFAllocatorAllocate(kCFAllocatorDefault, sizeof(keys[0]) * count, 0);
+      keys   = (CFStringRef*)CFAllocatorAllocate(kCFAllocatorDefault, sizeof(keys[0]) * count, 0);
       values = (CFArrayRef*)CFAllocatorAllocate(kCFAllocatorDefault, sizeof(values[0]) * count, 0);
     }
 
     /* Only iterate if buffers were allocated. */
     if (keys && values) {
-      CFIndex i, j = 0;
+      CFIndex        i, j = 0;
       CFTimeInterval oldest = 0.0;
 
       /* Get "now" for comparison for freshness. */
-      CFDateRef now = CFDateCreate(kCFAllocatorDefault, CFAbsoluteTimeGetCurrent());
+      CFDateRef now         = CFDateCreate(kCFAllocatorDefault, CFAbsoluteTimeGetCurrent());
 
       /* Get all the hosts in the cache */
       CFDictionaryGetKeysAndValues(_HostCache, (const void**)keys, (const void**)values);
@@ -734,7 +745,7 @@ void _ExpireCacheEntries(void)
 
         /* If this one is older than the oldest, save it's index. */
         else if (since > oldest) {
-          j = i;
+          j      = i;
           oldest = since;
         }
       }
@@ -762,7 +773,7 @@ void _ExpireCacheEntries(void)
 CFArrayRef _CFArrayCreateDeepCopy(CFAllocatorRef alloc, CFArrayRef array)
 {
   CFArrayRef result = NULL;
-  CFIndex i, c = CFArrayGetCount(array);
+  CFIndex    i, c = CFArrayGetCount(array);
   CFTypeRef* values;
   if (c == 0) {
     result = CFArrayCreate(alloc, NULL, 0, &kCFTypeArrayCallBacks);
@@ -792,7 +803,7 @@ CFArrayRef _CFArrayCreateDeepCopy(CFAllocatorRef alloc, CFArrayRef array)
     }
 
     result = (i == c) ? CFArrayCreate(alloc, values, c, &kCFTypeArrayCallBacks) : NULL;
-    c = i;
+    c      = i;
     for (i = 0; i < c; i++) {
       CFRelease(values[i]);
     }
@@ -807,17 +818,17 @@ CFArrayRef _CFArrayCreateDeepCopy(CFAllocatorRef alloc, CFArrayRef array)
 UInt8* _CFStringToCStringWithError(CFTypeRef thing, CFStreamError* error)
 {
   const CFAllocatorRef allocator = CFGetAllocator(thing);
-  const CFIndex length = CFStringGetLength((CFStringRef)thing);
-  CFIndex converted;
-  UInt8* result = NULL;
+  const CFIndex        length    = CFStringGetLength((CFStringRef)thing);
+  CFIndex              converted;
+  UInt8*               result = NULL;
 
   // Get the bytes of the conversion
-  result = _CFStringGetOrCreateCString(allocator, (CFStringRef)thing, NULL, &converted, kCFStringEncodingUTF8);
+  result                      = _CFStringGetOrCreateCString(allocator, (CFStringRef)thing, NULL, &converted, kCFStringEncodingUTF8);
 
   // If the buffer failed to create, set the error and bail.
   if (!result) {
     // Set the no memory error.
-    error->error = ENOMEM;
+    error->error  = ENOMEM;
     error->domain = kCFStreamErrorDomainPOSIX;
 
     // Bail
@@ -829,7 +840,7 @@ UInt8* _CFStringToCStringWithError(CFTypeRef thing, CFStreamError* error)
     // If not, this amounts to a host not found error.  This is to primarily
     // deal with embedded bad characters in host names coming from URL's
     // (e.g. www.apple.com%00www.notapple.com).
-    error->error = HOST_NOT_FOUND;
+    error->error  = HOST_NOT_FOUND;
     error->domain = (CFStreamErrorDomain)kCFStreamErrorDomainNetDB;
 
     CFAllocatorDeallocate(allocator, result);
@@ -862,10 +873,10 @@ void _HandleGetAddrInfoStatus(int eai_status, CFStreamError* error, Boolean intu
     // If it's a system error, get the real error otherwise it's a
     // NetDB error.
     if (eai_status == EAI_SYSTEM) {
-      error->error = errno;
+      error->error  = errno;
       error->domain = kCFStreamErrorDomainPOSIX;
     } else {
-      error->error = eai_status;
+      error->error  = eai_status;
       error->domain = (CFStreamErrorDomain)kCFStreamErrorDomainNetDB;
     }
   }
@@ -874,12 +885,12 @@ void _HandleGetAddrInfoStatus(int eai_status, CFStreamError* error, Boolean intu
     // No error set, see if errno has anything.  If so, mark the error as
     // a POSIX error.
     if (errno != 0) {
-      error->error = errno;
+      error->error  = errno;
       error->domain = (CFStreamErrorDomain)kCFStreamErrorDomainPOSIX;
 
       // Don't know what happened, so mark it as an internal netdb error.
     } else {
-      error->error = NETDB_INTERNAL;
+      error->error  = NETDB_INTERNAL;
       error->domain = (CFStreamErrorDomain)kCFStreamErrorDomainNetDB;
     }
   }
@@ -917,10 +928,9 @@ void _InitGetAddrInfoHints(CFHostInfoType info, struct addrinfo* hints)
   }
 
   hints->ai_socktype = SOCK_STREAM;
-  hints->ai_flags = ai_flags;
+  hints->ai_flags    = ai_flags;
 }
 #endif /* __MACH__ || __linux__ */
-
 
 /**
  *  @brief
@@ -982,8 +992,8 @@ CFTypeRef _CreateMasterAddressLookup(CFStringRef name, CFHostInfoType info, CFTy
 /* static */
 CFTypeRef _CreateAddressLookup(CFStringRef name, CFHostInfoType info, void* context, CFStreamError* error)
 {
-  Boolean started = FALSE;
-  CFTypeRef result = NULL;
+  Boolean   started = FALSE;
+  CFTypeRef result  = NULL;
 
   memset(error, 0, sizeof(error[0]));
 
@@ -991,7 +1001,7 @@ CFTypeRef _CreateAddressLookup(CFStringRef name, CFHostInfoType info, void* cont
     result = _CreateMasterAddressLookup(name, info, context, error);
 
   else {
-    CFHostRef host = NULL;
+    CFHostRef         host = NULL;
     CFMutableArrayRef list = NULL;
 
     /* Lock the master lookups list and cache */
@@ -1011,7 +1021,7 @@ CFTypeRef _CreateAddressLookup(CFStringRef name, CFHostInfoType info, void* cont
 
       /* Set up the error in case the list wasn't created. */
       if (!list) {
-        error->error = ENOMEM;
+        error->error  = ENOMEM;
         error->domain = kCFStreamErrorDomainPOSIX;
       }
 
@@ -1030,7 +1040,7 @@ CFTypeRef _CreateAddressLookup(CFStringRef name, CFHostInfoType info, void* cont
         host = CFHostCreateWithName(kCFAllocatorDefault, name);
 
         if (!host) {
-          error->error = ENOMEM;
+          error->error  = ENOMEM;
           error->domain = kCFStreamErrorDomainPOSIX;
         }
 
@@ -1096,7 +1106,7 @@ CFTypeRef _CreateAddressLookup(CFStringRef name, CFHostInfoType info, void* cont
                                      (void (*)(void*))_AddressLookupPerform};
 
       /* Create the lookup source.  This source will be signalled once the shared lookup finishes. */
-      result = CFRunLoopSourceCreate(CFGetAllocator(name), 0, &ctxt);
+      result                      = CFRunLoopSourceCreate(CFGetAllocator(name), 0, &ctxt);
 
       /* If it succeed, add it to the list of other pending clients. */
       if (result) {
@@ -1104,7 +1114,7 @@ CFTypeRef _CreateAddressLookup(CFStringRef name, CFHostInfoType info, void* cont
       }
 
       else {
-        error->error = ENOMEM;
+        error->error  = ENOMEM;
         error->domain = kCFStreamErrorDomainPOSIX;
 
         /* If this was going to be the only client, need to clean up. */
@@ -1129,7 +1139,7 @@ CFTypeRef _CreateAddressLookup(CFStringRef name, CFHostInfoType info, void* cont
 
 #if defined(__linux__)
 
-#pragma mark - Signal File Descriptor - Linux
+  #pragma mark - Signal File Descriptor - Linux
 
 /* static */
 int _SignalFdModifySignalWithError(int how, int signal, sigset_t* set, CFStreamError* error)
@@ -1166,8 +1176,8 @@ int _SignalFdClearSignalWithError(int signal, sigset_t* set, CFStreamError* erro
 int _SignalFdClearGetAddrInfoSignalWithHost(_CFHost* host)
 {
   const int signal = __kCFHostLinuxSignalFdSignal;
-  sigset_t sigset;
-  int result;
+  sigset_t  sigset;
+  int       result;
 
   __CFSpinLock(&host->_lock);
 
@@ -1182,12 +1192,12 @@ int _SignalFdClearGetAddrInfoSignalWithHost(_CFHost* host)
 int _CreateSignalFd(int signal, CFStreamError* error)
 {
   const int kInvalidExistingDescriptor = -1;
-  const int flags = 0;
-  sigset_t sigset;
-  int status;
-  int result = -1;
+  const int flags                      = 0;
+  sigset_t  sigset;
+  int       status;
+  int       result = -1;
 
-  status = _SignalFdSetSignalWithError(signal, &sigset, error);
+  status           = _SignalFdSetSignalWithError(signal, &sigset, error);
   __Require(status == 0, done);
 
   result = signalfd(kInvalidExistingDescriptor, &sigset, flags);
@@ -1201,11 +1211,11 @@ done:
 struct gaicb* _SignalFdGetAddrInfoResult(CFFileDescriptorRef fdref)
 {
   CFFileDescriptorNativeDescriptor fd;
-  struct signalfd_siginfo fdsi;
-  ssize_t status;
-  struct gaicb* result = NULL;
+  struct signalfd_siginfo          fdsi;
+  ssize_t                          status;
+  struct gaicb*                    result = NULL;
 
-  fd = CFFileDescriptorGetNativeDescriptor(fdref);
+  fd                                      = CFFileDescriptorGetNativeDescriptor(fdref);
   __Require(fd != -1, done);
 
   do {
@@ -1224,18 +1234,18 @@ done:
   return result;
 }
 
-#pragma mark - Address Lookup
+  #pragma mark - Address Lookup
 
 /* static */
 void _MasterAddressLookupCallBack_Linux(CFFileDescriptorRef fdref, CFOptionFlags callBackTypes, void* info)
 {
-  int status;
+  int           status;
   struct gaicb* request = NULL;
 
   // Attempt to retrieve the getaddrinfo_a result that fired the
   // completion signal that triggered this callback.
 
-  request = _SignalFdGetAddrInfoResult(fdref);
+  request               = _SignalFdGetAddrInfoResult(fdref);
   __Require(request != NULL, done);
 
   // Invoke the common, shared getaddrinfo{,_a} callback.
@@ -1260,9 +1270,9 @@ done:
 /* static */
 int _CreateAddressLookupRequest(const char* name, CFHostInfoType info, int signal, CFStreamError* error)
 {
-  struct sigevent sigev;
+  struct sigevent     sigev;
   _CFHostGAIARequest* gai_request = NULL;
-  int result = -1;
+  int                 result      = -1;
 
   __Require_Action(name != NULL, done, result = -EINVAL);
 
@@ -1275,16 +1285,16 @@ int _CreateAddressLookupRequest(const char* name, CFHostInfoType info, int signa
 
   memset(&gai_request->_request_gaicb, 0, sizeof(struct gaicb));
 
-  gai_request->_request_gaicb.ar_name = name;
+  gai_request->_request_gaicb.ar_name    = name;
   gai_request->_request_gaicb.ar_request = &gai_request->_request_hints;
 
-  gai_request->_request_list[0] = &gai_request->_request_gaicb;
+  gai_request->_request_list[0]          = &gai_request->_request_gaicb;
 
-  sigev.sigev_notify = SIGEV_SIGNAL;
-  sigev.sigev_value.sival_ptr = &gai_request->_request_gaicb;
-  sigev.sigev_signo = signal;
+  sigev.sigev_notify                     = SIGEV_SIGNAL;
+  sigev.sigev_value.sival_ptr            = &gai_request->_request_gaicb;
+  sigev.sigev_signo                      = signal;
 
-  result = getaddrinfo_a(GAI_NOWAIT, gai_request->_request_list, 1, &sigev);
+  result                                 = getaddrinfo_a(GAI_NOWAIT, gai_request->_request_list, 1, &sigev);
 
   if (result != 0) {
     _HandleGetAddrInfoStatus(result, error, TRUE);
@@ -1299,18 +1309,18 @@ done:
 /* static */
 CFFileDescriptorRef _CreateAddressLookupSource_Linux(int signal, CFTypeRef context, CFStreamError* error)
 {
-  int sigfd;
+  int                     sigfd;
   CFFileDescriptorContext fdrefContext = {0, (void*)context, NULL, NULL, NULL};
-  CFFileDescriptorRef result = NULL;
+  CFFileDescriptorRef     result       = NULL;
 
-  sigfd = _CreateSignalFd(signal, error);
+  sigfd                                = _CreateSignalFd(signal, error);
   if (sigfd == -1) {
     return result;
   }
 
   result = CFFileDescriptorCreate(kCFAllocatorDefault, sigfd, TRUE, _MasterAddressLookupCallBack_Linux, &fdrefContext);
   if (!result) {
-    error->error = ENOMEM;
+    error->error  = ENOMEM;
     error->domain = kCFStreamErrorDomainPOSIX;
     close(sigfd);
   } else {
@@ -1327,10 +1337,10 @@ CFFileDescriptorRef _CreateAddressLookupSource_Linux(int signal, CFTypeRef conte
 CFFileDescriptorRef _CreateMasterAddressLookup_Linux(CFStringRef name, CFHostInfoType info, CFTypeRef context, CFStreamError* error)
 {
   const CFAllocatorRef allocator = CFGetAllocator(name);
-  UInt8* buffer;
-  const int signal = __kCFHostLinuxSignalFdSignal;
-  CFFileDescriptorRef result = NULL;
-  int status;
+  UInt8*               buffer;
+  const int            signal = __kCFHostLinuxSignalFdSignal;
+  CFFileDescriptorRef  result = NULL;
+  int                  status;
 
   // Create a CFString representation of the lookup by converting it
   // into a null-terminated C string buffer consumable by
@@ -1368,18 +1378,18 @@ done:
 CFMachPortRef _CreateMasterAddressLookup_Mach(CFStringRef name, CFHostInfoType info, CFTypeRef context, CFStreamError* error)
 {
   const CFAllocatorRef allocator = CFGetAllocator(name);
-  UInt8* buffer;
-  CFMachPortRef result = NULL;
+  UInt8*               buffer;
+  CFMachPortRef        result = NULL;
 
-  buffer = _CFStringToCStringWithError(name, error);
+  buffer                      = _CFStringToCStringWithError(name, error);
 
   if (!buffer)
     return result;
 
   // Got a good name to send to lookup.
   else {
-    struct addrinfo hints;
-    mach_port_t prt = MACH_PORT_NULL;
+    struct addrinfo   hints;
+    mach_port_t       prt  = MACH_PORT_NULL;
     CFMachPortContext ctxt = {0, (void*)context, CFRetain, CFRelease, CFCopyDescription};
 
     // Set up the hints for getaddrinfo
@@ -1417,25 +1427,22 @@ CFTypeRef _CreateNameLookup(CFDataRef address, void* context, CFStreamError* err
   return result;
 }
 
-#if defined (__linux__)
-CFFileDescriptorRef _CreateNameLookup_Linux(CFDataRef address, void *context, CFStreamError *error) 
-{
-  
-}
+#if defined(__linux__)
+CFFileDescriptorRef _CreateNameLookup_Linux(CFDataRef address, void* context, CFStreamError* error) {}
 #endif
 
 #if defined(__MACH__)
 /* static */
 CFMachPortRef _CreateNameLookup_Mach(CFDataRef address, void* context, CFStreamError* error)
 {
-  mach_port_t prt = MACH_PORT_NULL;
-  CFMachPortRef result = NULL;
+  mach_port_t   prt      = MACH_PORT_NULL;
+  CFMachPortRef result   = NULL;
 
   CFMachPortContext ctxt = {0, (void*)context, CFRetain, CFRelease, CFCopyDescription};
-  struct sockaddr* sa = (struct sockaddr*)CFDataGetBytePtr(address);
+  struct sockaddr*  sa   = (struct sockaddr*)CFDataGetBytePtr(address);
 
   // Start the async lookup
-  error->error = getnameinfo_async_start(&prt, sa, sa->sa_len, 0, _GetNameInfoCallBack, (void*)context);
+  error->error           = getnameinfo_async_start(&prt, sa, sa->sa_len, 0, _GetNameInfoCallBack, (void*)context);
 
   // If the callback port was created, attempt to create the CFMachPort wrapper on it.
   if (!prt || !(result = CFMachPortCreateWithPort(CFGetAllocator(address), prt, _GetNameInfoMachPortCallBack, &ctxt, NULL))) {
@@ -1460,7 +1467,7 @@ SCNetworkReachabilityRef _CreateReachabilityLookup(CFTypeRef thing, void* contex
   // A CFStringRef means to create a reachability object by name.
   else {
     const CFAllocatorRef allocator = CFGetAllocator(thing);
-    UInt8* buffer;
+    UInt8*               buffer;
 
     buffer = _CFStringToCStringWithError(thing, error);
 
@@ -1511,7 +1518,7 @@ CFTypeRef _CreateDNSLookup(CFTypeRef thing, CFHostInfoType info, void* context, 
 #elif defined(__linux__)
   result = _CreateDNSLookup_Linux(thing, info, context, error);
 #else
-#warning "_CreateDNSLookup() doesn't support this platform!"
+  #warning "_CreateDNSLookup() doesn't support this platform!"
 #endif
 
   return result;
@@ -1522,17 +1529,17 @@ CFTypeRef _CreateDNSLookup(CFTypeRef thing, CFHostInfoType info, void* context, 
 CFMachPortRef _CreateDNSLookup_Mach(CFTypeRef thing, CFHostInfoType info, void* context, CFStreamError* error)
 {
   const CFAllocatorRef allocator = CFGetAllocator(thing);
-  UInt8* buffer;
-  CFMachPortRef result = NULL;
+  UInt8*               buffer;
+  CFMachPortRef        result = NULL;
 
-  buffer = _CFStringToCStringWithError(thing, error);
+  buffer                      = _CFStringToCStringWithError(thing, error);
 
   if (!buffer)
     return result;
 
   // Got a good name to send to lookup.
   else {
-    mach_port_t prt = MACH_PORT_NULL;
+    mach_port_t       prt  = MACH_PORT_NULL;
     CFMachPortContext ctxt = {0, (void*)context, CFRetain, CFRelease, CFCopyDescription};
 
     // Start the async lookup
@@ -1597,11 +1604,11 @@ size_t _AddressSizeForSupportedFamily(int family)
 /* static */
 void _GetAddrInfoCallBackWithFree(int eai_status, const struct addrinfo* res, void* ctxt, FreeAddrInfoCallBack freeaddrinfo_cb)
 {
-  _CFHost* host = (_CFHost*)ctxt;
-  CFHostClientCallBack cb = NULL;
-  CFStreamError error;
-  void* info = NULL;
-  CFHostInfoType type = _kCFNullHostInfoType;
+  _CFHost*             host = (_CFHost*)ctxt;
+  CFHostClientCallBack cb   = NULL;
+  CFStreamError        error;
+  void*                info = NULL;
+  CFHostInfoType       type = _kCFNullHostInfoType;
 
   // Retain here to guarantee safety really after the lookups release,
   // but definitely before the callback.
@@ -1625,14 +1632,14 @@ void _GetAddrInfoCallBackWithFree(int eai_status, const struct addrinfo* res, vo
 
     else {
       CFMutableArrayRef addrs;
-      CFAllocatorRef allocator = CFGetAllocator((CFHostRef)host);
+      CFAllocatorRef    allocator = CFGetAllocator((CFHostRef)host);
 
       // This is the list of new addresses to be saved.
-      addrs = CFArrayCreateMutable(allocator, 0, &kCFTypeArrayCallBacks);
+      addrs                       = CFArrayCreateMutable(allocator, 0, &kCFTypeArrayCallBacks);
 
       // Save the memory error if the address cache failed to create.
       if (!addrs) {
-        host->_error.error = ENOMEM;
+        host->_error.error  = ENOMEM;
         host->_error.domain = kCFStreamErrorDomainPOSIX;
 
         // Mark to indicate the resolution was performed.
@@ -1645,8 +1652,8 @@ void _GetAddrInfoCallBackWithFree(int eai_status, const struct addrinfo* res, vo
         // Loop through all of the addresses saving them in the array.
         for (i = res; i; i = i->ai_next) {
           const int family = i->ai_addr->sa_family;
-          CFDataRef data = NULL;
-          CFIndex length = 0;
+          CFDataRef data   = NULL;
+          CFIndex   length = 0;
 
           // Bypass any address families that are not understood by CFSocketStream
           if (family != AF_INET && family != AF_INET6)
@@ -1664,7 +1671,7 @@ void _GetAddrInfoCallBackWithFree(int eai_status, const struct addrinfo* res, vo
 
           // Fail with a memory error if the address wouldn't wrap.
           if (!data) {
-            host->_error.error = ENOMEM;
+            host->_error.error  = ENOMEM;
             host->_error.domain = kCFStreamErrorDomainPOSIX;
 
             // Release the addresses and mark as NULL so as not to save later.
@@ -1690,7 +1697,7 @@ void _GetAddrInfoCallBackWithFree(int eai_status, const struct addrinfo* res, vo
     }
 
     // Save the callback if there is one at this time.
-    cb = host->_callback;
+    cb   = host->_callback;
 
     type = host->_type;
 
@@ -1733,8 +1740,13 @@ void _GetAddrInfoCallBack(int eai_status, const struct addrinfo* res, void* ctxt
 #endif /* defined(__MACH__) */
 
 /* static */
-void _GetNameInfoCallBackWithFree_NoLock(int eai_status, char* hostname, char* serv, _CFHost* host, CFHostClientCallBack* cb,
-                                                      void** info, CFStreamError* error)
+void _GetNameInfoCallBackWithFree_NoLock(int                   eai_status,
+                                         char*                 hostname,
+                                         char*                 serv,
+                                         _CFHost*              host,
+                                         CFHostClientCallBack* cb,
+                                         void**                info,
+                                         CFStreamError*        error)
 {
   __Require(hostname != NULL, done);
   __Require(host != NULL, done);
@@ -1759,11 +1771,11 @@ void _GetNameInfoCallBackWithFree_NoLock(int eai_status, char* hostname, char* s
       CFAllocatorRef allocator = CFGetAllocator((CFHostRef)host);
 
       // Create the name from the given response.
-      CFStringRef name = CFStringCreateWithCString(allocator, hostname, kCFStringEncodingUTF8);
+      CFStringRef name         = CFStringCreateWithCString(allocator, hostname, kCFStringEncodingUTF8);
 
       // If didn't create the name, fail with out of memory.
       if (!name) {
-        host->_error.error = ENOMEM;
+        host->_error.error  = ENOMEM;
         host->_error.domain = kCFStreamErrorDomainPOSIX;
       }
 
@@ -1776,7 +1788,7 @@ void _GetNameInfoCallBackWithFree_NoLock(int eai_status, char* hostname, char* s
 
         // Failed to create the list of names so mark out of memory.
         if (!names) {
-          host->_error.error = ENOMEM;
+          host->_error.error  = ENOMEM;
           host->_error.domain = kCFStreamErrorDomainPOSIX;
         }
 
@@ -1803,13 +1815,17 @@ done:
 }
 
 /* static */
-void _GetNameInfoCallBackWithFreeAndWithShouldLock(int eai_status, char* hostname, char* serv, void* ctxt,
-                                                                FreeNameInfoCallBack freenameinfo_cb, Boolean should_lock)
+void _GetNameInfoCallBackWithFreeAndWithShouldLock(int                  eai_status,
+                                                   char*                hostname,
+                                                   char*                serv,
+                                                   void*                ctxt,
+                                                   FreeNameInfoCallBack freenameinfo_cb,
+                                                   Boolean              should_lock)
 {
-  _CFHost* host = (_CFHost*)ctxt;
-  CFHostClientCallBack cb = NULL;
-  void* info = NULL;
-  CFStreamError error;
+  _CFHost*             host = (_CFHost*)ctxt;
+  CFHostClientCallBack cb   = NULL;
+  void*                info = NULL;
+  CFStreamError        error;
 
   // Retain here to guarantee safety really after the lookups release,
   // but definitely before the callback.
@@ -1882,24 +1898,21 @@ void _FreeNameInfoCallBack_Mach(char* hostname, char* serv)
 void _GetNameInfoCallBack(int eai_status, char* hostname, char* serv, void* ctxt)
 {
   static const Boolean should_lock = TRUE;
-  FreeNameInfoCallBack free_cb = _FreeNameInfoCallBack_Mach;
+  FreeNameInfoCallBack free_cb     = _FreeNameInfoCallBack_Mach;
 
   _GetNameInfoCallBackWithFreeAndWithShouldLock(eai_status, hostname, serv, ctxt, free_cb, should_lock);
 }
 
 /* static */
-void _GetNameInfoMachPortCallBack(CFMachPortRef port, void* msg, CFIndex size, void* info)
-{
-  getnameinfo_async_handle_reply(msg);
-}
+void _GetNameInfoMachPortCallBack(CFMachPortRef port, void* msg, CFIndex size, void* info) { getnameinfo_async_handle_reply(msg); }
 
 /* static */
 void _NetworkReachabilityCallBack(SCNetworkReachabilityRef target, SCNetworkConnectionFlags flags, void* ctxt)
 {
-  _CFHost* host = (_CFHost*)ctxt;
-  CFHostClientCallBack cb = NULL;
-  CFStreamError error;
-  void* info = NULL;
+  _CFHost*             host = (_CFHost*)ctxt;
+  CFHostClientCallBack cb   = NULL;
+  CFStreamError        error;
+  void*                info = NULL;
 
   // Retain here to guarantee safety really after the lookups release,
   // but definitely before the callback.
@@ -1919,7 +1932,7 @@ void _NetworkReachabilityCallBack(SCNetworkReachabilityRef target, SCNetworkConn
 
     // If didn't create the data, fail with out of memory.
     if (!reachability) {
-      host->_error.error = ENOMEM;
+      host->_error.error  = ENOMEM;
       host->_error.domain = kCFStreamErrorDomainPOSIX;
     }
 
@@ -1955,8 +1968,8 @@ void _NetworkReachabilityCallBack(SCNetworkReachabilityRef target, SCNetworkConn
 void _NetworkReachabilityByIPCallBack(_CFHost* host)
 {
   CFHostClientCallBack cb = NULL;
-  CFStreamError error;
-  void* info = NULL;
+  CFStreamError        error;
+  void*                info = NULL;
 
   // Retain here to guarantee safety really after the lookups release,
   // but definitely before the callback.
@@ -1993,11 +2006,11 @@ void _NetworkReachabilityByIPCallBack(_CFHost* host)
 /* static */
 void _DNSCallBack_Mach(int32_t status, char* buf, uint32_t len, struct sockaddr* from, int fromlen, void* context)
 {
-  _CFHost* host = (_CFHost*)context;
-  CFHostClientCallBack cb = NULL;
-  CFStreamError error;
-  void* info = NULL;
-  CFHostInfoType type = _kCFNullHostInfoType;
+  _CFHost*             host = (_CFHost*)context;
+  CFHostClientCallBack cb   = NULL;
+  CFStreamError        error;
+  void*                info = NULL;
+  CFHostInfoType       type = _kCFNullHostInfoType;
 
   // Retain here to guarantee safety really after the lookups release,
   // but definitely before the callback.
@@ -2024,19 +2037,19 @@ void _DNSCallBack_Mach(int32_t status, char* buf, uint32_t len, struct sockaddr*
       CFAllocatorRef allocator = CFGetAllocator((CFHostRef)context);
 
       // Wrap the reply and the source of the reply
-      CFDataRef rr = CFDataCreate(allocator, (const UInt8*)buf, len);
-      CFDataRef sa = CFDataCreate(allocator, (const UInt8*)from, fromlen);
+      CFDataRef rr             = CFDataCreate(allocator, (const UInt8*)buf, len);
+      CFDataRef sa             = CFDataCreate(allocator, (const UInt8*)from, fromlen);
 
       // If couldn't wrap, fail with no memory error.
       if (!rr || !sa) {
-        host->_error.error = ENOMEM;
+        host->_error.error  = ENOMEM;
         host->_error.domain = kCFStreamErrorDomainPOSIX;
       }
 
       else {
         // Create the information to put in the info dictionary.
-        CFTypeRef list[2] = {rr, sa};
-        CFArrayRef array = CFArrayCreate(allocator, list, sizeof(list) / sizeof(list[0]), &kCFTypeArrayCallBacks);
+        CFTypeRef  list[2] = {rr, sa};
+        CFArrayRef array   = CFArrayCreate(allocator, list, sizeof(list) / sizeof(list[0]), &kCFTypeArrayCallBacks);
 
         // Make sure it was created and add it.
         if (array) {
@@ -2046,7 +2059,7 @@ void _DNSCallBack_Mach(int32_t status, char* buf, uint32_t len, struct sockaddr*
 
         // Did make the information list so fail with out of memory
         else {
-          host->_error.error = ENOMEM;
+          host->_error.error  = ENOMEM;
           host->_error.domain = kCFStreamErrorDomainPOSIX;
         }
       }
@@ -2061,7 +2074,7 @@ void _DNSCallBack_Mach(int32_t status, char* buf, uint32_t len, struct sockaddr*
     }
 
     // Save the callback if there is one at this time.
-    cb = host->_callback;
+    cb   = host->_callback;
 
     // Save the type of lookup for the callback.
     type = host->_type;
@@ -2086,10 +2099,7 @@ void _DNSCallBack_Mach(int32_t status, char* buf, uint32_t len, struct sockaddr*
 }
 
 /* static */
-void _DNSMachPortCallBack(CFMachPortRef port, void* msg, CFIndex size, void* info)
-{
-  dns_async_handle_reply(msg);
-}
+void _DNSMachPortCallBack(CFMachPortRef port, void* msg, CFIndex size, void* info) { dns_async_handle_reply(msg); }
 
 #endif /* #if defined(__MACH__) */
 
@@ -2117,7 +2127,7 @@ void _MasterLookupCallBack(CFHostRef theHost, CFHostInfoType typeInfo, const CFS
   _CFMutexUnlock(_HostLock);
 
   if (list) {
-    CFIndex i, count;
+    CFIndex    i, count;
     CFArrayRef addrs = CFHostGetInfo(theHost, _kCFHostMasterAddressLookup, NULL);
 
     /* If no error, add the host to the cache. */
@@ -2154,9 +2164,9 @@ void _MasterLookupCallBack(CFHostRef theHost, CFHostInfoType typeInfo, const CFS
     count = CFArrayGetCount(list);
 
     for (i = 1; i < count; i++) {
-      _CFHost* client;
+      _CFHost*               client;
       CFRunLoopSourceContext ctxt = {0};
-      CFRunLoopSourceRef src = (CFRunLoopSourceRef)CFArrayGetValueAtIndex(list, i);
+      CFRunLoopSourceRef     src  = (CFRunLoopSourceRef)CFArrayGetValueAtIndex(list, i);
 
       CFRunLoopSourceGetContext(src, &ctxt);
       client = (_CFHost*)ctxt.info;
@@ -2187,7 +2197,7 @@ void _MasterLookupCallBack(CFHostRef theHost, CFHostInfoType typeInfo, const CFS
 
         else {
           /* Make sure to error if couldn't create the list. */
-          client->_error.error = ENOMEM;
+          client->_error.error  = ENOMEM;
           client->_error.domain = kCFStreamErrorDomainPOSIX;
 
           /* Mark to indicate the resolution was performed. */
@@ -2199,7 +2209,7 @@ void _MasterLookupCallBack(CFHostRef theHost, CFHostInfoType typeInfo, const CFS
       CFRunLoopSourceSignal((CFRunLoopSourceRef)(client->_lookup));
 
       CFArrayRef schedules = client->_schedules;
-      CFIndex j, c = CFArrayGetCount(schedules);
+      CFIndex    j, c = CFArrayGetCount(schedules);
 
       /* Make sure the signal can make it through */
       for (j = 0; j < c; j += 2) {
@@ -2233,9 +2243,9 @@ void _MasterLookupCallBack(CFHostRef theHost, CFHostInfoType typeInfo, const CFS
 /* static */
 void _AddressLookupSchedule_NoLock(_CFHost* host, CFRunLoopRef rl, CFStringRef mode)
 {
-  CFArrayRef list;
-  CFArrayRef names = (CFArrayRef)CFDictionaryGetValue(host->_info, (const void*)kCFHostNames);
-  CFStringRef name = (CFStringRef)CFArrayGetValueAtIndex(names, 0);
+  CFArrayRef  list;
+  CFArrayRef  names = (CFArrayRef)CFDictionaryGetValue(host->_info, (const void*)kCFHostNames);
+  CFStringRef name  = (CFStringRef)CFArrayGetValueAtIndex(names, 0);
 
   /* Lock the list of master lookups and cache */
   _CFMutexLock(_HostLock);
@@ -2253,8 +2263,8 @@ void _AddressLookupSchedule_NoLock(_CFHost* host, CFRunLoopRef rl, CFStringRef m
 void _AddressLookupPerform(_CFHost* host)
 {
   CFHostClientCallBack cb = NULL;
-  CFStreamError error;
-  void* info = NULL;
+  CFStreamError        error;
+  void*                info = NULL;
 
   // Retain here to guarantee safety really after the lookups release,
   // but definitely before the callback.
@@ -2287,16 +2297,16 @@ void _AddressLookupPerform(_CFHost* host)
 /* static */
 Boolean _IsDottedIp(CFStringRef name)
 {
-  Boolean result = FALSE;
-  UInt8 stack_buffer[1024];
-  UInt8* buffer = stack_buffer;
-  CFIndex length = sizeof(stack_buffer);
-  CFAllocatorRef alloc = CFGetAllocator(name);
+  Boolean        result = FALSE;
+  UInt8          stack_buffer[1024];
+  UInt8*         buffer = stack_buffer;
+  CFIndex        length = sizeof(stack_buffer);
+  CFAllocatorRef alloc  = CFGetAllocator(name);
 
-  buffer = _CFStringGetOrCreateCString(alloc, name, buffer, &length, kCFStringEncodingASCII);
+  buffer                = _CFStringGetOrCreateCString(alloc, name, buffer, &length, kCFStringEncodingASCII);
 
   if (buffer) {
-    struct addrinfo hints;
+    struct addrinfo  hints;
     struct addrinfo* results = NULL;
 
     memset(&hints, 0, sizeof(hints));
@@ -2318,7 +2328,6 @@ Boolean _IsDottedIp(CFStringRef name)
   return result;
 }
 #endif /* defined(__MACH__) */
-
 
 #pragma mark - Extern Function Definitions (API)
 
@@ -2387,7 +2396,7 @@ CFHostRef CFHostCreateWithAddress(CFAllocatorRef allocator, CFDataRef addr)
 /* extern */
 CFHostRef CFHostCreateCopy(CFAllocatorRef allocator, CFHostRef h)
 {
-  _CFHost* host = (_CFHost*)h;
+  _CFHost* host   = (_CFHost*)h;
 
   // Create the base object
   _CFHost* result = _HostCreate(allocator);
@@ -2455,9 +2464,9 @@ CFHostRef CFHostCreateCopy(CFAllocatorRef allocator, CFHostRef h)
 /* extern */
 Boolean CFHostStartInfoResolution(CFHostRef theHost, CFHostInfoType info, CFStreamError* error)
 {
-  _CFHost* host = (_CFHost*)theHost;
+  _CFHost*      host = (_CFHost*)theHost;
   CFStreamError extra;
-  Boolean result = FALSE;
+  Boolean       result = FALSE;
 
   if (!error)
     error = &extra;
@@ -2487,7 +2496,7 @@ Boolean CFHostStartInfoResolution(CFHostRef theHost, CFHostInfoType info, CFStre
       // 4012176 If the source was signaled, wake up the run loop.
       if (wakeup) {
         CFArrayRef schedules = host->_schedules;
-        CFIndex i, count = CFArrayGetCount(schedules);
+        CFIndex    i, count = CFArrayGetCount(schedules);
 
         // Make sure the signal can make it through
         for (i = 0; i < count; i += 2) {
@@ -2529,8 +2538,8 @@ Boolean CFHostStartInfoResolution(CFHostRef theHost, CFHostInfoType info, CFStre
 /* extern */
 CFTypeRef CFHostGetInfo(CFHostRef theHost, CFHostInfoType info, Boolean* hasBeenResolved)
 {
-  _CFHost* host = (_CFHost*)theHost;
-  Boolean extra;
+  _CFHost*  host = (_CFHost*)theHost;
+  Boolean   extra;
   CFTypeRef result = NULL;
 
   // Just make sure there is something to dereference.
@@ -2569,10 +2578,7 @@ CFArrayRef CFHostGetAddressing(CFHostRef theHost, Boolean* hasBeenResolved)
 }
 
 /* extern */
-CFArrayRef CFHostGetNames(CFHostRef theHost, Boolean* hasBeenResolved)
-{
-  return (CFArrayRef)CFHostGetInfo(theHost, kCFHostNames, hasBeenResolved);
-}
+CFArrayRef CFHostGetNames(CFHostRef theHost, Boolean* hasBeenResolved) { return (CFArrayRef)CFHostGetInfo(theHost, kCFHostNames, hasBeenResolved); }
 
 #if defined(__MACH__)
 /* extern */
@@ -2614,8 +2620,8 @@ void CFHostCancelInfoResolution(CFHostRef theHost, CFHostInfoType info)
     // Pull the lookup out of the list in the master list.
     if (host->_type == kCFHostAddresses) {
       CFMutableArrayRef list;
-      CFArrayRef names = (CFArrayRef)CFDictionaryGetValue(host->_info, (const void*)kCFHostNames);
-      CFStringRef name = (CFStringRef)CFArrayGetValueAtIndex(names, 0);
+      CFArrayRef        names = (CFArrayRef)CFDictionaryGetValue(host->_info, (const void*)kCFHostNames);
+      CFStringRef       name  = (CFStringRef)CFArrayGetValueAtIndex(names, 0);
 
       /* Lock the master lookup list and cache */
       _CFMutexLock(_HostLock);
@@ -2626,7 +2632,7 @@ void CFHostCancelInfoResolution(CFHostRef theHost, CFHostInfoType info)
       if (list) {
         /* Try to find this lookup in the list of clients. */
         CFIndex count = CFArrayGetCount(list);
-        CFIndex idx = CFArrayGetFirstIndexOfValue(list, CFRangeMake(0, count), host->_lookup);
+        CFIndex idx   = CFArrayGetFirstIndexOfValue(list, CFRangeMake(0, count), host->_lookup);
 
         if (idx != kCFNotFound) {
           /* Remove this lookup. */
@@ -2658,7 +2664,7 @@ void CFHostCancelInfoResolution(CFHostRef theHost, CFHostInfoType info)
     // If the cancel was created, need to schedule and signal it.
     if (host->_lookup) {
       CFArrayRef schedules = host->_schedules;
-      CFIndex i, count = CFArrayGetCount(schedules);
+      CFIndex    i, count = CFArrayGetCount(schedules);
 
       // Schedule the new lookup
       _CFTypeScheduleOnMultipleRunLoops(host->_lookup, schedules);
@@ -2719,8 +2725,8 @@ Boolean CFHostSetClient(CFHostRef theHost, CFHostClientCallBack clientCB, CFHost
       // Pull the lookup out of the master lookups.
       if (host->_type == kCFHostAddresses) {
         CFMutableArrayRef list;
-        CFArrayRef names = (CFArrayRef)CFDictionaryGetValue(host->_info, (const void*)kCFHostNames);
-        CFStringRef name = (CFStringRef)CFArrayGetValueAtIndex(names, 0);
+        CFArrayRef        names = (CFArrayRef)CFDictionaryGetValue(host->_info, (const void*)kCFHostNames);
+        CFStringRef       name  = (CFStringRef)CFArrayGetValueAtIndex(names, 0);
 
         /* Lock the masters list and cache */
         _CFMutexLock(_HostLock);
@@ -2731,7 +2737,7 @@ Boolean CFHostSetClient(CFHostRef theHost, CFHostClientCallBack clientCB, CFHost
         if (list) {
           /* Try to find this lookup in the list of clients. */
           CFIndex count = CFArrayGetCount(list);
-          CFIndex idx = CFArrayGetFirstIndexOfValue(list, CFRangeMake(0, count), host->_lookup);
+          CFIndex idx   = CFArrayGetFirstIndexOfValue(list, CFRangeMake(0, count), host->_lookup);
 
           if (idx != kCFNotFound) {
             /* Remove this lookup. */
@@ -2757,7 +2763,7 @@ Boolean CFHostSetClient(CFHostRef theHost, CFHostClientCallBack clientCB, CFHost
       // Release the lookup now.
       CFRelease(host->_lookup);
       host->_lookup = NULL;
-      host->_type = _kCFNullHostInfoType;
+      host->_type   = _kCFNullHostInfoType;
     }
 
     // Zero out the callback and client context.
